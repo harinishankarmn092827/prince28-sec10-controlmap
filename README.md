@@ -86,3 +86,35 @@ Currently in the initial development and project setup phase.
 ## License
 
 To be determined.
+## User Persona
+
+GRC analyst at a mid-size stockbroker in Chennai preparing for its first SEBI CSCRF audit while the parent group reports against NIST CSF.
+
+## Hardest Technical Problem
+
+Accurately mapping one CSCRF requirement to multiple NIST CSF 2.0 outcomes and NIST SP 800-53 Rev 5 controls.
+
+The application must also determine applicability based on the organization's SEBI entity category.
+
+All mappings must come from structured, reviewed data (OSCAL, CPRT/OLIR, and reviewed mapping tables). The LLM must never invent mappings or regulatory requirements.
+
+## Data Sources
+
+1. NIST CSF 2.0 Core and Informative References.
+2. NIST SP 800-53 Rev 5 catalog in OSCAL JSON.
+3. NIST CPRT/OLIR mappings.
+4. SEBI CSCRF circular dated 20 August 2024, including applicable clarifications and extension circulars.
+5. CERT-In Directions 2022.
+
+## Target Evaluation Metrics
+
+| Metric | Target |
+|---|---|
+| Crosswalk mapping agreement | 90% or higher across 60 controls |
+| Entity-category applicability accuracy | 95% or higher across 40 questions |
+
+These are project evaluation targets and must be validated through testing.
+
+## Important Regulatory Disclaimer
+
+ControlMap provides compliance mapping assistance and evidence recommendations. It does not guarantee regulatory compliance or predict audit outcomes. Final compliance decisions require verification against official regulatory documents and auditor assessment.
