@@ -72,6 +72,21 @@ Instead, it should explain that an audit result depends on actual implementation
 
 It should offer to evaluate known gaps and available evidence.
 
+## Question 7: Access Management Evidence
+
+What documents and records should a mid-size stockbroker maintain to demonstrate compliance with access management requirements?
+
+## Question 8: Framework Mapping Validation
+
+How can ControlMap verify that a mapping between NIST CSF 2.0, NIST SP 800-53 Rev 5, and SEBI CSCRF is accurate?
+
+## Question 9: Regulatory Applicability
+
+How does SEBI CSCRF applicability change across different entity categories, and how can an organization verify which requirements apply to it?
+
+## Question 10: Evidence Gap Analysis
+
+Given an organization's access-control policies and evidence documents, identify missing evidence, weak evidence, and requirements that need further review.
 ## Evaluation Principle
 
 The application must distinguish between:
