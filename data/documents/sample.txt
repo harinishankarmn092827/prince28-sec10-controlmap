@@ -1,0 +1,12 @@
+ControlMap Document Loader Test
+
+This document contains sample cybersecurity information for testing the document ingestion pipeline.
+
+Access Control:
+Organizations should maintain user accounts, assign appropriate permissions, and regularly review access privileges.
+
+Audit Evidence:
+Maintain access review records, account creation logs, and user activity logs.
+
+Incident Response:
+Organizations should document security incidents and maintain incident response procedures.
