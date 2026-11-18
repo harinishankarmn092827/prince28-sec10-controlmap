@@ -1,0 +1,182 @@
+[
+  {
+    "id": 1,
+    "framework": "NIST CSF 2.0",
+    "control_id": "GV.OC-01",
+    "title": "Organizational Context",
+    "function_or_family": "Govern",
+    "category": "General",
+    "source_date": "2024-02-26"
+  },
+  {
+    "id": 2,
+    "framework": "NIST CSF 2.0",
+    "control_id": "ID.AM-01",
+    "title": "Asset Inventory",
+    "function_or_family": "Identify",
+    "category": "General",
+    "source_date": "2024-02-26"
+  },
+  {
+    "id": 3,
+    "framework": "NIST CSF 2.0",
+    "control_id": "PR.AA-01",
+    "title": "Identity Management",
+    "function_or_family": "Protect",
+    "category": "General",
+    "source_date": "2024-02-26"
+  },
+  {
+    "id": 4,
+    "framework": "NIST CSF 2.0",
+    "control_id": "DE.CM-01",
+    "title": "Network Monitoring",
+    "function_or_family": "Detect",
+    "category": "General",
+    "source_date": "2024-02-26"
+  },
+  {
+    "id": 5,
+    "framework": "NIST CSF 2.0",
+    "control_id": "RS.MA-01",
+    "title": "Incident Management",
+    "function_or_family": "Respond",
+    "category": "General",
+    "source_date": "2024-02-26"
+  },
+  {
+    "id": 6,
+    "framework": "NIST CSF 2.0",
+    "control_id": "RC.RP-01",
+    "title": "Recovery Plan",
+    "function_or_family": "Recover",
+    "category": "General",
+    "source_date": "2024-02-26"
+  },
+  {
+    "id": 7,
+    "framework": "NIST SP 800-53 Rev 5",
+    "control_id": "AC-2",
+    "title": "Account Management",
+    "function_or_family": "Access Control",
+    "category": "General",
+    "source_date": "2020-09-23"
+  },
+  {
+    "id": 8,
+    "framework": "NIST SP 800-53 Rev 5",
+    "control_id": "AC-3",
+    "title": "Access Enforcement",
+    "function_or_family": "Access Control",
+    "category": "General",
+    "source_date": "2020-09-23"
+  },
+  {
+    "id": 9,
+    "framework": "NIST SP 800-53 Rev 5",
+    "control_id": "AU-2",
+    "title": "Event Logging",
+    "function_or_family": "Audit and Accountability",
+    "category": "General",
+    "source_date": "2020-09-23"
+  },
+  {
+    "id": 10,
+    "framework": "NIST SP 800-53 Rev 5",
+    "control_id": "AU-6",
+    "title": "Audit Record Review",
+    "function_or_family": "Audit and Accountability",
+    "category": "General",
+    "source_date": "2020-09-23"
+  },
+  {
+    "id": 11,
+    "framework": "NIST SP 800-53 Rev 5",
+    "control_id": "CM-2",
+    "title": "Baseline Configuration",
+    "function_or_family": "Configuration Management",
+    "category": "General",
+    "source_date": "2020-09-23"
+  },
+  {
+    "id": 12,
+    "framework": "NIST SP 800-53 Rev 5",
+    "control_id": "CP-2",
+    "title": "Contingency Plan",
+    "function_or_family": "Contingency Planning",
+    "category": "General",
+    "source_date": "2020-09-23"
+  },
+  {
+    "id": 13,
+    "framework": "NIST SP 800-53 Rev 5",
+    "control_id": "IA-2",
+    "title": "Identification and Authentication",
+    "function_or_family": "Identification and Authentication",
+    "category": "General",
+    "source_date": "2020-09-23"
+  },
+  {
+    "id": 14,
+    "framework": "NIST SP 800-53 Rev 5",
+    "control_id": "IR-4",
+    "title": "Incident Handling",
+    "function_or_family": "Incident Response",
+    "category": "General",
+    "source_date": "2020-09-23"
+  },
+  {
+    "id": 15,
+    "framework": "NIST SP 800-53 Rev 5",
+    "control_id": "RA-5",
+    "title": "Vulnerability Monitoring",
+    "function_or_family": "Risk Assessment",
+    "category": "General",
+    "source_date": "2020-09-23"
+  },
+  {
+    "id": 16,
+    "framework": "NIST SP 800-53 Rev 5",
+    "control_id": "SC-7",
+    "title": "Boundary Protection",
+    "function_or_family": "System and Communications Protection",
+    "category": "General",
+    "source_date": "2020-09-23"
+  },
+  {
+    "id": 17,
+    "framework": "SEBI CSCRF",
+    "control_id": "DEMO-SEBI-001",
+    "title": "Cybersecurity Governance",
+    "function_or_family": "Governance",
+    "category": "Mid-size",
+    "source_date": "2024-08-20"
+  },
+  {
+    "id": 18,
+    "framework": "SEBI CSCRF",
+    "control_id": "DEMO-SEBI-002",
+    "title": "Cyber Risk Management",
+    "function_or_family": "Risk Management",
+    "category": "Qualified RE",
+    "source_date": "2024-08-20"
+  },
+  {
+    "id": 19,
+    "framework": "SEBI CSCRF",
+    "control_id": "DEMO-SEBI-003",
+    "title": "Incident Reporting",
+    "function_or_family": "Incident Management",
+    "category": "Mid-size",
+    "source_date": "2024-08-20"
+  },
+  {
+    "id": 20,
+    "framework": "SEBI CSCRF",
+    "control_id": "DEMO-SEBI-004",
+    "title": "Security Monitoring",
+    "function_or_family": "Monitoring",
+    "category": "Qualified RE",
+    "source_date": "2024-08-20"
+  }
+]
