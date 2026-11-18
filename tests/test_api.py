@@ -145,6 +145,21 @@ def test_filter_documents_by_category():
     assert all(document["applies_to_category"] == "Mid-size" for document in data)
 
 
+def test_filter_documents_by_function_or_family():
+    response = client.get(
+        "/v1/documents",
+        params={"function_or_family": "Govern"},
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["function_or_family"] == "Govern"
+    assert data[0]["control_id"] == "GV.OC-01"
+
+
 def test_get_document_by_id():
     response = client.get("/v1/documents/7")
 

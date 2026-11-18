@@ -15,6 +15,7 @@ class DatabaseDocumentService:
         session: AsyncSession,
         query: str = "",
         framework: str | None = None,
+        function_or_family: str | None = None,
         category: str | None = None,
     ) -> list[Document]:
         """Retrieve and filter documents from PostgreSQL."""
@@ -26,6 +27,13 @@ class DatabaseDocumentService:
         if framework:
             statement = statement.where(
                 DocumentRecord.document_metadata["framework"].astext.ilike(framework)
+            )
+
+        if function_or_family:
+            statement = statement.where(
+                DocumentRecord.document_metadata["function_or_family"].astext.ilike(
+                    function_or_family
+                )
             )
 
         if category:

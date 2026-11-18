@@ -16,6 +16,7 @@ document_service = DatabaseDocumentService()
 async def get_documents(
     query: str = Query(default=""),
     framework: str | None = Query(default=None),
+    function_or_family: str | None = Query(default=None),
     applies_to_category: str | None = Query(default=None),
     session: AsyncSession = Depends(get_db),
 ) -> list[Document]:
@@ -25,6 +26,7 @@ async def get_documents(
         session=session,
         query=query,
         framework=framework,
+        function_or_family=function_or_family,
         category=applies_to_category,
     )
 

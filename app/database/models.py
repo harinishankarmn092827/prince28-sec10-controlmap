@@ -29,10 +29,12 @@ class Document(Base):
     )
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    licence: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     doc_type: Mapped[str] = mapped_column(String(100), nullable=False)
     published_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+
     document_metadata: Mapped[dict] = mapped_column(
         "metadata",
         JSONB,
