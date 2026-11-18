@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI
 
+from app.api.mapping_routes import router as mapping_router
 from app.api.routes import router
 from app.core.config import settings
 
@@ -13,6 +14,7 @@ app = FastAPI(
 )
 
 app.include_router(router)
+app.include_router(mapping_router)
 
 
 @app.get("/health")

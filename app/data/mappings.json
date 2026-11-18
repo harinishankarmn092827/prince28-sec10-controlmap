@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "source_framework": "NIST SP 800-53 Rev 5",
+    "source_control_id": "AC-2",
+    "target_framework": "NIST CSF 2.0",
+    "target_control_id": "PR.AA-01",
+    "relationship": "supports",
+    "rationale": "Account management supports identity and access control requirements.",
+    "source_reference": "NIST SP 800-53 Rev 5 AC-2"
+  }
+]
