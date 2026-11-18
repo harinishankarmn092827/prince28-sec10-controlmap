@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     debug: bool = False
 
     data_file: Path = Path("app/data/sample_records.json")
+    database_url: str
 
     model_config = SettingsConfigDict(
         env_file=".env",

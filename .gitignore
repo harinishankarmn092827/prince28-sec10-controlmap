@@ -32,5 +32,8 @@ Thumbs.db
 *.db
 *.sqlite3
 
+# Alembic
+alembic.ini.bak
+
 # Logs
 *.log
