@@ -68,7 +68,7 @@ class DocumentService:
                     document.control_id,
                     document.title,
                     document.function_or_family,
-                    document.category,
+                    document.applies_to_category,
                 ]
             ).casefold()
         ]

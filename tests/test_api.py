@@ -70,3 +70,20 @@ def test_validate_mappings_response_structure():
     assert "errors" in data
     assert isinstance(data["valid"], bool)
     assert isinstance(data["errors"], list)
+
+
+def test_document_not_found_problem_details():
+    response = client.get("/v1/documents/9999")
+
+    assert response.status_code == 404
+
+    assert response.headers["content-type"].startswith("application/problem+json")
+
+    data = response.json()
+
+    assert data["type"] == "about:blank"
+    assert data["title"] == "Not Found"
+    assert data["status"] == 404
+    assert data["detail"] == "Document not found"
+    assert data["instance"] == "/v1/documents/9999"
+    assert "request_id" in data
