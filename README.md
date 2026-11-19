@@ -26,23 +26,148 @@ GRC analysts and cybersecurity compliance teams at stockbroking organizations pr
 
 ## Key Features
 
-1. **Framework Crosswalk:** Explore relationships between controls across three cybersecurity frameworks.
+1. **Framework Crosswalk:** Explore relationships between controls across multiple frameworks.
 2. **Control Search:** Search for controls using framework identifiers.
 3. **Applicability Assessment:** Identify requirements applicable to different SEBI entity categories.
 4. **Evidence Recommendations:** Understand the documentation and evidence expected during audits.
-5. **AI-Assisted Explanations:** Generate understandable explanations based on verified framework data.
+5. **AI-Assisted Explanations:** Planned capability for understandable explanations grounded in verified framework data.
 
 ## Technology Stack
 
 | Technology | Purpose |
 |---|---|
-| Python | Backend development |
+| Python 3.13 | Backend development |
 | FastAPI | REST API development |
-| uv | Python project and dependency management |
+| SQLAlchemy | Database ORM |
+| PostgreSQL | Relational database |
+| Alembic | Database migrations |
+| Redis | Caching infrastructure |
+| Docker | Containerization |
+| Docker Compose | Multi-container orchestration |
+| uv | Python dependency management |
+| pytest | Automated testing |
+| pytest-cov | Test coverage reporting |
 | Ruff | Code linting and formatting |
 | Pre-commit | Automated code quality checks |
 | Git | Version control |
 | GitHub | Source code management |
+
+## Architecture
+
+ControlMap uses a containerized backend architecture:
+
+- **API:** FastAPI application.
+- **Database:** PostgreSQL for storing documents and control records.
+- **Cache:** Redis service.
+- **Migrations:** Alembic for database schema management.
+- **Testing:** Separate unit and PostgreSQL integration tests.
+
+## Run Locally Using Docker
+
+### Prerequisites
+
+- Docker Desktop
+- Git
+
+### Start the application
+
+Clone the repository:
+
+```bash
+git clone https://github.com/harinishankarmn092827/prince28-sec10-controlmap.git
+cd prince28-sec10-controlmap
+```
+
+Start the application:
+
+```bash
+docker compose up --build -d
+```
+
+Docker Compose starts:
+
+- FastAPI application
+- PostgreSQL database
+- Redis cache
+
+Database migrations are applied automatically during API startup.
+
+### Access the application
+
+| Resource | URL |
+|---|---|
+| API | http://localhost:8000 |
+| Swagger UI | http://localhost:8000/docs |
+| Health Check | http://localhost:8000/health |
+| Readiness Check | http://localhost:8000/ready |
+
+### Check container status
+
+```bash
+docker compose ps
+```
+
+### View application logs
+
+```bash
+docker compose logs -f api
+```
+
+### Stop the application
+
+```bash
+docker compose down
+```
+
+To remove containers and their persistent database/cache volumes:
+
+```bash
+docker compose down -v
+```
+
+**Warning:** The `-v` option deletes the local PostgreSQL and Redis data volumes.
+
+## Running Tests
+
+Install development dependencies:
+
+```bash
+uv sync --dev
+```
+
+Run unit tests:
+
+```bash
+uv run python -m pytest tests/unit -v
+```
+
+Run integration tests:
+
+Configure the isolated PostgreSQL test database using `TEST_DATABASE_URL` before executing integration tests.
+
+Run:
+
+```bash
+uv run python -m pytest tests/integration -v
+```
+
+Run all tests:
+
+```bash
+uv run python -m pytest -v
+```
+
+Generate a coverage report:
+
+```bash
+uv run python -m pytest tests/unit --cov=app --cov=scripts --cov-report=term-missing --cov-report=html
+```
+
+The HTML coverage report is generated in:
+
+```text
+htmlcov/index.html
+```
 
 ## Data Sources
 
@@ -64,28 +189,48 @@ Every applicability result must identify the relevant SEBI entity category.
 ## Project Structure
 
 ```text
-controlmap/
-│
-├── app/
-│   ├── api/
-│   ├── core/
-│   ├── data/
-│   ├── models/
-│   └── services/
-│
-├── docs/
-├── tests/
-├── pyproject.toml
-└── README.md
+prince28-sec10-controlmap/
+|
+|-- app/
+|   |-- api/
+|   |-- core/
+|   |-- data/
+|   |-- database/
+|   |-- models/
+|   |-- services/
+|
+|-- docs/
+|-- migrations/
+|   |-- versions/
+|
+|-- scripts/
+|-- tests/
+|   |-- integration/
+|   |-- unit/
+|
+|-- Dockerfile
+|-- docker-compose.yml
+|-- alembic.ini
+|-- pyproject.toml
+|-- uv.lock
+|-- README.md
 ```
 
 ## Project Status
 
-Currently in the initial development and project setup phase.
+The backend foundation is implemented, including:
 
-## License
+- FastAPI application and API endpoints.
+- PostgreSQL database integration.
+- Database models and Alembic migrations.
+- Document loading and control record importing.
+- Framework and category-based document filtering.
+- Dockerized API, PostgreSQL and Redis services.
+- Unit and integration test organization.
+- Automated test coverage reporting.
 
-To be determined.
+Further development will expand framework crosswalk accuracy, evidence recommendations, and AI-assisted explanations.
+
 ## User Persona
 
 GRC analyst at a mid-size stockbroker in Chennai preparing for its first SEBI CSCRF audit while the parent group reports against NIST CSF.
@@ -97,14 +242,6 @@ Accurately mapping one CSCRF requirement to multiple NIST CSF 2.0 outcomes and N
 The application must also determine applicability based on the organization's SEBI entity category.
 
 All mappings must come from structured, reviewed data (OSCAL, CPRT/OLIR, and reviewed mapping tables). The LLM must never invent mappings or regulatory requirements.
-
-## Data Sources
-
-1. NIST CSF 2.0 Core and Informative References.
-2. NIST SP 800-53 Rev 5 catalog in OSCAL JSON.
-3. NIST CPRT/OLIR mappings.
-4. SEBI CSCRF circular dated 20 August 2024, including applicable clarifications and extension circulars.
-5. CERT-In Directions 2022.
 
 ## Target Evaluation Metrics
 
@@ -118,3 +255,7 @@ These are project evaluation targets and must be validated through testing.
 ## Important Regulatory Disclaimer
 
 ControlMap provides compliance mapping assistance and evidence recommendations. It does not guarantee regulatory compliance or predict audit outcomes. Final compliance decisions require verification against official regulatory documents and auditor assessment.
+
+## License
+
+To be determined.
