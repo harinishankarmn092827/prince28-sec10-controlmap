@@ -1,7 +1,7 @@
 """Create documents and pages tables.
 
 Revision ID: 59a81978a18b
-Revises:
+Revises: a1b2c3d4e5f6
 Create Date: 2026-11-18 13:32:56.835315
 """
 
@@ -13,7 +13,7 @@ from sqlalchemy.dialects import postgresql
 
 # Revision identifiers
 revision: str = "59a81978a18b"
-down_revision: Union[str, Sequence[str], None] = None
+down_revision: Union[str, Sequence[str], None] = "a1b2c3d4e5f6"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
