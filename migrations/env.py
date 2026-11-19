@@ -17,8 +17,13 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Load the Neon PostgreSQL URL from the .env file.
-database_url = str(settings.database_url)
+# Use an explicitly supplied database URL when available.
+# Otherwise, fall back to the application database URL.
+database_url = config.get_main_option("sqlalchemy.url")
+
+if not database_url:
+    database_url = str(settings.database_url)
+
 config.set_main_option(
     "sqlalchemy.url",
     database_url.replace("%", "%%"),
