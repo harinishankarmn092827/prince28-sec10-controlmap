@@ -1,6 +1,55 @@
-
 services:
-  # FastAPI application
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: controlmap-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: controlmap
+      POSTGRES_PASSWORD: controlmap123
+      POSTGRES_DB: controlmap
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U controlmap -d controlmap"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: controlmap-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: controlmap-migrate
+    environment: &app-env
+      DATABASE_URL: postgresql+asyncpg://controlmap:controlmap123@db:5432/controlmap
+      APP_NAME: ControlMap
+      DEBUG: "false"
+    command:
+      - sh
+      - -c
+      - python -m alembic upgrade head && python -m scripts.import_control_records
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   api:
     build:
       context: .
@@ -9,74 +58,31 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
-
     environment:
-      DATABASE_URL: postgresql+asyncpg://controlmap:controlmap123@db:5432/controlmap
-      TEST_DATABASE_URL: postgresql+asyncpg://controlmap:controlmap123@db:5432/controlmap_test
+      <<: *app-env
       REDIS_URL: redis://redis:6379/0
-      APP_NAME: ControlMap
-      DEBUG: "false"
-
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-
-    command: >
-      sh -c "python -m alembic upgrade head &&
-             python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
-
+      migrate:
+        condition: service_completed_successfully
+    command:
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
     healthcheck:
       test:
         - CMD
         - python
         - -c
         - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
-
-  # PostgreSQL database
-  db:
-    image: postgres:17-alpine
-    container_name: controlmap-db
-    restart: unless-stopped
-
-    environment:
-      POSTGRES_USER: controlmap
-      POSTGRES_PASSWORD: controlmap123
-      POSTGRES_DB: controlmap
-
-    ports:
-      - "5432:5432"
-
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U controlmap -d controlmap"]
       interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Redis cache
-  redis:
-    image: redis:7-alpine
-    container_name: controlmap-redis
-    restart: unless-stopped
-
-    ports:
-      - "6379:6379"
-
-    volumes:
-      - redis_data:/data
-
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
+      timeout: 3s
       retries: 5
 
 volumes:

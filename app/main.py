@@ -5,12 +5,14 @@ from uuid import uuid4
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.mapping_routes import router as mapping_router
 from app.api.routes import router
 from app.core.config import settings
 from app.core.logging import request_id_context, setup_logging
+from app.database.connection import AsyncSessionLocal
 
 
 def create_app() -> FastAPI:
@@ -112,11 +114,24 @@ def create_app() -> FastAPI:
 
     @application.get("/health")
     def health_check() -> dict[str, str]:
+        """Check whether the API process is running."""
         return {"status": "healthy"}
 
     @application.get("/ready")
-    def readiness_check() -> dict[str, str]:
-        return {"status": "ready"}
+    async def readiness_check():
+        """Check whether the API can access PostgreSQL."""
+
+        try:
+            async with AsyncSessionLocal() as session:
+                await session.execute(text("SELECT 1"))
+
+            return {"status": "ready"}
+
+        except Exception:
+            return JSONResponse(
+                status_code=503,
+                content={"status": "not ready"},
+            )
 
     return application
 

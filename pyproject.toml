@@ -14,11 +14,13 @@ dependencies = [
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "poethepoet>=0.49.0",
     "pre-commit>=4.7.0",
     "pytest>=9.2.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.17.5",
 ]
+
 [tool.ruff]
 line-length = 88
 target-version = "py313"
@@ -29,3 +31,12 @@ select = ["E", "F", "I"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.poe.tasks]
+dev = "uvicorn app.main:app --reload"
+lint = "ruff check ."
+test = "pytest tests/unit -v"
+test-integration = "pytest tests/integration -v"
+cov = "pytest tests/unit tests/integration --cov=app --cov=scripts --cov-report=term-missing --cov-report=html"
+migrate = "alembic upgrade head"
+seed = "python -m scripts.import_control_records"
