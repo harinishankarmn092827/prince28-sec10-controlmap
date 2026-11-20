@@ -1,5 +1,6 @@
 """Main FastAPI application for ControlMap."""
 
+import os
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
@@ -116,7 +117,11 @@ def create_app() -> FastAPI:
     @application.head("/health")
     def health_check() -> dict[str, str]:
         """Check whether the API process is running."""
-        return {"status": "healthy"}
+        return {
+            "status": "healthy",
+            "version": settings.api_version,
+            "commit": os.getenv("RENDER_GIT_COMMIT", "unknown"),
+        }
 
     @application.get("/ready")
     async def readiness_check():
