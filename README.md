@@ -1,5 +1,7 @@
 # ControlMap
 
+![CI](https://github.com/harinishankarmn092827/prince28-sec10-controlmap/actions/workflows/ci.yml/badge.svg)
+
 ### Cybersecurity Framework Crosswalk and Audit Evidence Mapping
 
 ControlMap is a cybersecurity compliance mapping application designed to help Governance, Risk, and Compliance (GRC) analysts understand and map security controls across multiple cybersecurity frameworks.
