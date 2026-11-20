@@ -1,116 +1,133 @@
-# Day 4 & Day 5 – Docker, Testing, CI/CD, and Deployment
-
-## 1. Docker Implementation
-
-- Created a multi-stage `Dockerfile`.
-- Used Python 3.13 slim as the base image.
-- Installed dependencies using `uv`.
-- Configured a non-root application user.
-- Added a `.dockerignore` file to reduce the Docker build context.
-
-## 2. Docker Compose
-
-Configured the following services:
-
-- PostgreSQL with pgvector.
-- Redis for caching.
-- Migration service for Alembic migrations and control record imports.
-- FastAPI application service.
-
-Additional configurations:
-
-- Configured service health checks.
-- Set up service dependencies.
-- Organized the application services using Docker Compose.
-
-## 3. Database Migrations
-
-- Configured Alembic database migrations.
-- Added a separate test database.
-- Implemented temporary PostgreSQL databases for integration tests.
-- Applied actual Alembic migrations during integration test setup.
-- Added database cleanup after tests.
-
-## 4. Testing Results
-
-| Test Type | Tests Passed |
-|---|---:|
-| Unit tests | 4 |
-| Integration tests | 14 |
-| **Total** | **18** |
-
-All 18 tests passed during the recorded test run.
-
-## 5. Coverage Results
-
-| Coverage Type | Coverage |
-|---|---:|
-| Unit tests | 54% |
-| Unit and integration tests | 72% |
-
-Generated an HTML coverage report in the `htmlcov/` directory.
-
-## 6. Poe Tasks
-
-Configured the following tasks in `pyproject.toml`:
-
-- `dev`
-- `lint`
-- `test`
-- `test-integration`
-- `cov`
-- `migrate`
-- `seed`
-
-These tasks simplify common development, testing, and database operations.
-
-## 7. Makefile
-
-- Added Makefile targets for common development tasks.
-- Simplified execution of development and testing commands.
-
-## 8. API Verification
-
-- Verified the `/health` endpoint.
-- Verified the `/ready` endpoint with the database running.
-- Verified that `/ready` returns HTTP 503 when PostgreSQL is unavailable.
-- Verified API container health.
-
-## 9. Warnings
-
-- The recorded test run reported a Starlette deprecation warning related to HTTPX.
-- All 18 tests passed during that test run.
-
----
-
-# Day 5 – CI/CD Implementation
-
-## 10. Continuous Integration (CI)
-
-Configured GitHub Actions using:
-
-`.github/workflows/ci.yml`
-
-Implemented the following:
-
-- Automated linting and code-quality checks.
-- Automated unit and integration testing.
-- PostgreSQL service configuration for integration tests.
-- Docker image build and publishing workflow.
-- Deployed API smoke testing.
-- Automated workflow execution for relevant GitHub events.
-
-### CI Verification
-
-- Verified successful `ControlMap CI` workflow runs.
-- Confirmed that the CI workflow completed successfully after merging the Day 5 changes.
-
 ## 11. Continuous Deployment (CD)
 
-Configured GitHub Actions using:
+Configured GitHub Actions using `.github/workflows/cd.yml`.
 
-`.github/workflows/cd.yml`
+Implemented:
+- Deployment triggered after successful CI on `main`.
+- Render deployment triggered through a GitHub Actions secret.
+- Deployment verification using the `/health` endpoint.
+- Verification that the deployed commit matches the expected commit.
+- Automatic failure when deployment verification does not succeed.
 
-Implemented the following:
+### CD Verification
 
-- Configured deployment after a successful CI workflow on the `main
+- Verified successful ControlMap CD workflow runs.
+- Confirmed that the application starts successfully on Render.
+- Verified the deployed commit through the health endpoint.
+
+## 12. Branch Protection
+
+- Configured protection for the `main` branch.
+- Required changes to be submitted through pull requests.
+- Configured required CI status checks before merging.
+
+## 13. Live Deployment
+
+- Application: https://prince28-sec10-controlmap.onrender.com
+- Health endpoint: https://prince28-sec10-controlmap.onrender.com/health
+- Readiness endpoint: https://prince28-sec10-controlmap.onrender.com/ready
+- API documentation: https://prince28-sec10-controlmap.onrender.com/docs
+
+Latest verified health response:
+
+```json
+{
+  "status": "healthy",
+  "version": "v1",
+  "commit": "131da4f4af8a7d5d1ae16c688c3bee1fd569a4aa"
+}
+```
+
+## 14. Rollback and Roll-Forward Drill
+
+### Rollback
+
+- Previous application commit: `8e58eff`.
+- Trigger: Rollback through the Render dashboard.
+- Result: Render reported `Deploy succeeded | Live`.
+- Deployment duration: 15.8 seconds.
+- Render recorded the deployment as rolled back by the user through the dashboard.
+
+### Roll-Forward
+
+- Restored application commit: `131da4f`.
+- Trigger: Manual deployment through the Render dashboard.
+- Result: Render reported `Deploy succeeded | Live`.
+- Deployment duration: 24.6 seconds.
+- Application startup completed successfully.
+
+### Final Verification
+
+The `/health` endpoint returned:
+
+- Status: `healthy`
+- Version: `v1`
+- Commit: `131da4f4af8a7d5d1ae16c688c3bee1fd569a4aa`
+
+The rollback and roll-forward drill was completed successfully.
+
+Note: These timings represent the deployment durations reported by Render. The drill tested application-version rollback and restoration, not database rollback.
+
+## 15. Nightly Health Check
+
+Workflow file: `.github/workflows/nightly-health.yml`
+
+The workflow is configured to run on a schedule and supports manual execution.
+
+Verification evidence:
+- Latest successful run: Record the actual GitHub Actions run and date.
+- Health endpoint result: Record the result from the workflow logs.
+
+## 16. Uptime Monitoring
+
+- Configured an UptimeRobot monitor for the `/health` endpoint.
+- Monitoring target: `https://prince28-sec10-controlmap.onrender.com/health`
+- The monitor previously reported the endpoint as up.
+- README monitoring badge configured.
+
+Check the monitor dashboard for the latest status and uptime percentage before submitting the lab.
+
+## 17. Secrets Management
+
+- GitHub Actions deployment secret: `RENDER_DEPLOY_HOOK`.
+- Stored in GitHub repository Actions secrets.
+- Never commit deployment hooks, credentials, API keys, or other secret values to Git.
+- Monitoring API keys should also remain private.
+
+## 18. Database Migration Safety
+
+Application rollback does not automatically reverse database schema changes.
+
+To support safe deployments:
+- Prefer backward-compatible database migrations.
+- Avoid removing columns or tables while older application versions may still need them.
+- Separate schema expansion from destructive cleanup.
+- Back up important data before risky migrations.
+- Test migrations and rollback compatibility before production changes.
+
+The completed rollback drill verified application-version recovery; it did not independently verify database rollback.
+
+## 19. Performance Improvement
+
+Potential improvement:
+- Add database connection pooling and tune pool size based on measured traffic.
+- Monitor response latency and database connection usage before changing configuration.
+- Measure performance before and after changes to confirm the benefit.
+
+## 20. Release Tag
+
+Tag: `week-1`
+
+Before submission, verify that the tag points to the intended release commit and update it if the lab requires a different commit.
+
+## 21. Final Verification Checklist
+
+- [x] CI workflow configured and verified.
+- [x] CD workflow configured and verified.
+- [x] Application deployed on Render.
+- [x] `/health` endpoint verified.
+- [x] Rollback to `8e58eff` completed.
+- [x] Roll-forward to `131da4f` completed.
+- [x] Latest application commit verified.
+- [x] README deployment and monitoring documentation merged.
+- [ ] Nightly health-check run verified
