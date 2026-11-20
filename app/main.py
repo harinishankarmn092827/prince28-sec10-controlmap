@@ -113,6 +113,7 @@ def create_app() -> FastAPI:
     application.include_router(mapping_router)
 
     @application.get("/health")
+    @application.head("/health")
     def health_check() -> dict[str, str]:
         """Check whether the API process is running."""
         return {"status": "healthy"}
