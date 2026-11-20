@@ -1,0 +1,35 @@
+name: Nightly Health Check
+
+on:
+  schedule:
+    - cron: "30 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health-check:
+    name: Check deployed API health
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check API health endpoint
+        run: |
+          response=$(curl --fail --silent --show-error \
+            https://prince28-sec10-controlmap.onrender.com/health)
+
+          echo "$response"
+
+          echo "$response" | python -c '
+          import json
+          import sys
+
+          data = json.load(sys.stdin)
+
+          assert data.get("status") == "healthy", data
+          assert data.get("version"), data
+          assert data.get("commit"), data
+
+          print("Nightly health check passed!")
+          '
