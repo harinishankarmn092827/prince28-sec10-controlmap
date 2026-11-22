@@ -1,3 +1,44 @@
+## D03 — PostgreSQL and Database Migrations
+
+### Database Models
+- Database models are maintained in `app/database/models.py`.
+- Database configuration and connections are managed by the application database modules.
+
+### Migrations
+- Alembic migrations are maintained in `migrations/versions/`.
+- Three migration files are present.
+- Use Alembic to apply database schema changes consistently.
+
+### Database Loader
+- Loader script: `scripts/load_db.py`.
+- Verify the loader against the configured database before recording successful execution.
+
+### Verification
+- Unit tests: `uv run pytest tests/unit -q`.
+- The unit test suite passed four tests in the latest recorded run.
+- Set `PYTHONPATH=.` in PowerShell before running tests if required by the current environment.
+
+## D05 — CI/CD and Deployment
+
+### Continuous Integration
+- Workflow: `.github/workflows/ci.yml`.
+- CI automates project quality checks and tests.
+
+### Continuous Deployment
+- Workflow: `.github/workflows/cd.yml`.
+- Deployment is configured for the Render-hosted application.
+- The `/health` endpoint is used to verify deployment health.
+
+### Rollback and Roll-Forward
+- The rollback and roll-forward drill is documented below.
+- Application rollback was tested through the Render dashboard.
+- Database rollback was not tested as part of this drill.
+
+### Release
+- Release tag: `week-1`.
+- Verify the tag and deployed commit before submission.
+
+
 ## 11. Continuous Deployment (CD)
 
 Configured GitHub Actions using `.github/workflows/cd.yml`.
