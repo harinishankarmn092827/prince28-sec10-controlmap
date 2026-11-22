@@ -69,6 +69,41 @@ GRC analysts and cybersecurity compliance teams at stockbroking organizations pr
 | Render | Application hosting |
 | UptimeRobot | Uptime monitoring |
 
+## Run locally in one command
+
+ControlMap uses Docker Compose to start the API, PostgreSQL database, Redis, and database migrations.
+
+### Prerequisites
+- Docker Desktop
+- Python and `uv` for local development
+
+### Start the application
+
+From the project root, run:
+
+```bash
+docker compose up --build
+```
+
+Once the containers are healthy, open:
+- API: http://localhost:8000
+- Swagger API documentation: http://localhost:8000/docs
+- Health check: http://localhost:8000/health
+
+To stop the services, press `Ctrl+C` and run:
+
+```bash
+docker compose down
+```
+
+To stop the services and remove the database and Redis volumes as well, run:
+
+```bash
+docker compose down -v
+```
+
+**Warning:** The `-v` option deletes the persisted database and Redis data.
+
 ## Architecture
 
 ControlMap uses a containerized backend architecture.

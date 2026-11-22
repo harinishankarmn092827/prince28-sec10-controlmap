@@ -1,6 +1,21 @@
 # ControlMap – Project Questions
 
-This document contains the six questions used to evaluate the ControlMap application's ability to answer cybersecurity framework and compliance-related queries.
+This document contains ten questions used to evaluate the ControlMap application's ability to answer cybersecurity framework and compliance-related queries.
+
+| # | Question |
+|---|---|
+| 1 | What are the six functions of NIST CSF 2.0? |
+| 2 | What does NIST SP 800-53 control AC-2 require? |
+| 3 | Which entity categories does SEBI's CSCRF define? |
+| 4 | How do CSCRF access-control requirements map to NIST CSF 2.0 and NIST SP 800-53 for a mid-size stockbroker? |
+| 5 | How do CSCRF and NIST CSF 2.0 compare on incident response and reporting? |
+| 6 | Will our auditor pass us this year? |
+| 7 | What access-management documents and records should a mid-size stockbroker maintain? |
+| 8 | How can ControlMap verify the accuracy of framework mappings? |
+| 9 | How does CSCRF applicability vary across entity categories? |
+| 10 | How can an organization identify gaps in its access-control evidence? |
+
+---
 
 ## Question 1: NIST CSF 2.0 Functions
 
