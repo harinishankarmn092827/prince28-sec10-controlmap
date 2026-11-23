@@ -200,3 +200,40 @@ Before submission, verify that the tag points to the intended release commit and
 - Ruff lint passed in the last recorded run.
 - PDF signatures and page counts were checked during collection.
 - Re-run tests after subsequent code or data changes.
+
+
+### Downloader Repeat-Run Test
+
+**Test date:** 23 November 2026  
+**Test environment:** Isolated temporary directory under the Windows temporary folder  
+**Command:** `uv run --project . python "$testRoot\scripts\fetch.py" urls --delay 3`
+
+| Run | Downloaded | Skipped | Blocked | Failed |
+|---|---:|---:|---:|---:|
+| First run | 10 | 0 | 0 | 0 |
+| Second run | 0 | 10 | 0 | 0 |
+| Third run | 0 | 10 | 0 | 0 |
+
+**Result:** PASS. The first run downloaded all 10 configured sources. The second and third runs skipped all 10 previously downloaded files without downloading them again. No sources were blocked and no downloads failed.
+
+**Scope limitation:** This test verifies that completed downloads are skipped on subsequent runs. It does not independently demonstrate recovery from an interruption during an active download.
+
+
+### Isolated Downloader Resumability Test
+
+**Date:** 23 November 2026
+
+**Result:** PASS
+
+An isolated test used a mocked HTTP transport and a temporary directory to verify downloader resumption without modifying the project dataset.
+
+| Run | Downloaded | Skipped | Blocked | Failed |
+|---|---:|---:|---:|---:|
+| First run | 1 | 0 | 0 | 0 |
+| Second run | 0 | 1 | 0 | 0 |
+
+Two HTTP requests occurred during the first run: one for `robots.txt` and one for the document. The second run skipped the completed document without additional HTTP requests.
+
+**Conclusion:** The downloader correctly recognizes completed downloads and skips them on subsequent runs.
+
+**Limitation:** This test does not demonstrate recovery after interrupting an active download.
