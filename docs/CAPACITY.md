@@ -21,7 +21,17 @@ At 1536 dimensions and four bytes per vector component, the raw vector payload i
 
 This excludes PostgreSQL row overhead, indexes, metadata, and other database contents.
 
-Check the current Neon Free plan storage allowance and actual usage in your Neon dashboard. Compare the measured database size with the available storage before deciding whether an upgrade is needed.
+The Neon Free plan provides **1.00 GB of PostgreSQL storage per project**, according to the [official Neon announcement](https://neon.com/blog/neon-free-plan-1-gb-per-project).
+
+If the local document corpus were stored in PostgreSQL, its 22.88 MB would represent approximately **2.23%** of this allowance.
+
+The estimated raw vector payload represents approximately **1.49%** of the same allowance.
+
+These percentages are separate estimates and must not be treated as measured database usage. Local document files do not consume PostgreSQL storage unless stored in the database. Vector payload estimates exclude indexes, row overhead, metadata, and other database contents.
+
+**Preliminary conclusion:** The estimated raw vector payload is small relative to the stated Free plan allowance. The project appears feasible within that allowance based on these estimates, but actual database usage and current plan limits must be verified.
+
+Plan limits can change. Check the Neon dashboard and official documentation before making a production capacity decision.
 
 ### Measure actual database usage
 
@@ -66,4 +76,6 @@ To improve the estimate, extract accepted documents, apply the intended cleaning
 - Vector payload: four bytes per dimension, excluding database overhead.
 - Model: `text-embedding-3-small`.
 - Assumed price: $0.02 per million input tokens; verify current pricing.
+- Neon Free storage assumption: 1.00 GB per project.
+- Storage allowance reference: https://neon.com/blog/neon-free-plan-1-gb-per-project
 <!-- generated:end -->

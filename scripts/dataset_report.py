@@ -30,6 +30,11 @@ FLOAT_BYTES = 4
 CHUNK_TOKENS = 800
 CHUNK_OVERLAP = 100
 
+# Neon Free plan storage allowance.
+# Verify the current plan limits before making production decisions.
+NEON_FREE_STORAGE_BYTES = 1024**3
+NEON_FREE_STORAGE_SOURCE = "https://neon.com/blog/neon-free-plan-1-gb-per-project"
+
 
 def read_manifest() -> list[dict]:
     """Read JSON Lines manifest records."""
@@ -235,10 +240,10 @@ def build_dataset_report(
         "",
         f"- Manifest records: **{len(records)}**",
         f"- Configured source rows: **{len(sources)}**",
-        (f"- Total size of available manifest files: **{human_size(total_bytes)}**"),
+        f"- Total size of available manifest files: **{human_size(total_bytes)}**",
         f"- PDF pages across readable PDFs: **{pdf_pages}**",
-        (f"- Approximate extracted characters: **{extracted_characters:,}**"),
-        (f"- Missing files referenced by the manifest: **{len(missing_files)}**"),
+        f"- Approximate extracted characters: **{extracted_characters:,}**",
+        f"- Missing files referenced by the manifest: **{len(missing_files)}**",
         "",
         "### Download statuses",
         "",
@@ -267,7 +272,7 @@ def build_dataset_report(
             "",
             "### Source coverage",
             "",
-            ("| Source | Configured URLs | Manifest records |"),
+            "| Source | Configured URLs | Manifest records |",
             "|---|---:|---:|",
         ]
     )
@@ -396,6 +401,11 @@ def build_capacity_report(stats: dict) -> str:
     vector_bytes = estimated_chunks * EMBEDDING_DIMENSIONS * FLOAT_BYTES
 
     vector_size = human_size(vector_bytes)
+    free_storage_size = human_size(NEON_FREE_STORAGE_BYTES)
+
+    corpus_percent = (stats["total_bytes"] / NEON_FREE_STORAGE_BYTES) * 100
+
+    vector_percent = (vector_bytes / NEON_FREE_STORAGE_BYTES) * 100
 
     lines = [
         "# ControlMap Capacity Estimate",
@@ -408,7 +418,7 @@ def build_capacity_report(stats: dict) -> str:
         "",
         "## Embedding cost",
         "",
-        (f"**Estimated one-time embedding input cost: ${embedding_cost:.6f} USD**"),
+        f"**Estimated one-time embedding input cost: ${embedding_cost:.6f} USD**",
         "",
         (
             f"This estimate covers approximately {estimated_tokens:,} "
@@ -431,7 +441,7 @@ def build_capacity_report(stats: dict) -> str:
             f"{stats['record_count']} manifest records."
         ),
         "",
-        (f"The estimated extracted text is approximately {estimated_tokens:,} tokens."),
+        f"The estimated extracted text is approximately {estimated_tokens:,} tokens.",
         "",
         (
             f"At {EMBEDDING_DIMENSIONS} dimensions and four bytes "
@@ -446,10 +456,42 @@ def build_capacity_report(stats: dict) -> str:
         ),
         "",
         (
-            "Check the current Neon Free plan storage allowance and "
-            "actual usage in your Neon dashboard. Compare the measured "
-            "database size with the available storage before deciding "
-            "whether an upgrade is needed."
+            f"The Neon Free plan provides **{free_storage_size} "
+            "of PostgreSQL storage per project**, according to the "
+            f"[official Neon announcement]({NEON_FREE_STORAGE_SOURCE})."
+        ),
+        "",
+        (
+            f"If the local document corpus were stored in PostgreSQL, "
+            f"its {human_size(stats['total_bytes'])} would represent "
+            f"approximately **{corpus_percent:.2f}%** of this allowance."
+        ),
+        "",
+        (
+            f"The estimated raw vector payload represents approximately "
+            f"**{vector_percent:.2f}%** of the same allowance."
+        ),
+        "",
+        (
+            "These percentages are separate estimates and must not be "
+            "treated as measured database usage. Local document files "
+            "do not consume PostgreSQL storage unless stored in the "
+            "database. Vector payload estimates exclude indexes, row "
+            "overhead, metadata, and other database contents."
+        ),
+        "",
+        (
+            "**Preliminary conclusion:** The estimated raw vector "
+            "payload is small relative to the stated Free plan "
+            "allowance. The project appears feasible within that "
+            "allowance based on these estimates, but actual database "
+            "usage and current plan limits must be verified."
+        ),
+        "",
+        (
+            "Plan limits can change. Check the Neon dashboard and "
+            "official documentation before making a production "
+            "capacity decision."
         ),
         "",
         "### Measure actual database usage",
@@ -457,7 +499,7 @@ def build_capacity_report(stats: dict) -> str:
         "Run these queries in your PostgreSQL SQL console:",
         "",
         "```sql",
-        ("SELECT pg_size_pretty(pg_database_size(current_database()))"),
+        "SELECT pg_size_pretty(pg_database_size(current_database()))",
         "    AS database_size;",
         "",
         "SELECT",
@@ -511,9 +553,11 @@ def build_capacity_report(stats: dict) -> str:
         f"- Chunk size: {CHUNK_TOKENS} tokens.",
         f"- Chunk overlap: {CHUNK_OVERLAP} tokens.",
         f"- Embedding dimensions: {EMBEDDING_DIMENSIONS}.",
-        ("- Vector payload: four bytes per dimension, excluding database overhead."),
+        "- Vector payload: four bytes per dimension, excluding database overhead.",
         f"- Model: `{EMBEDDING_MODEL}`.",
-        ("- Assumed price: $0.02 per million input tokens; verify current pricing."),
+        "- Assumed price: $0.02 per million input tokens; verify current pricing.",
+        f"- Neon Free storage assumption: {free_storage_size} per project.",
+        f"- Storage allowance reference: {NEON_FREE_STORAGE_SOURCE}",
     ]
 
     return "\n".join(lines)
