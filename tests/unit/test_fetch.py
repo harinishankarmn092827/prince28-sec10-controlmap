@@ -415,3 +415,66 @@ def test_fetch_all_skips_already_downloaded_file(tmp_path):
         assert downloaded_file.read_bytes() == (b"Previously downloaded document")
 
     asyncio.run(run_test())
+
+
+def test_download_resumes_partial_file(tmp_path):
+    async def run_test():
+        import hashlib
+
+        from src.controlmap.ingest.fetch import file_stem, slug
+
+        document = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        partial = document[:10]
+        remaining = document[len(partial) :]
+
+        source = Source(
+            url="https://example.com/test-document.pdf",
+            source="resume-test",
+            licence="Test licence",
+            title="Resume Test Document",
+        )
+
+        output_directory = tmp_path / "data" / "raw" / slug(source.source)
+        output_directory.mkdir(parents=True, exist_ok=True)
+
+        temporary = output_directory / f"{file_stem(source.url)}.download.part"
+        temporary.write_bytes(partial)
+
+        requests = []
+
+        def handler(request):
+            requests.append(request)
+
+            if request.headers.get("Range") == f"bytes={len(partial)}-":
+                return httpx.Response(
+                    206,
+                    headers={
+                        "Content-Type": "application/pdf",
+                        "Content-Range": (
+                            f"bytes {len(partial)}-{len(document) - 1}/{len(document)}"
+                        ),
+                    },
+                    content=remaining,
+                )
+
+            return httpx.Response(
+                200,
+                headers={"Content-Type": "application/pdf"},
+                content=document,
+            )
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            record = await _download(client, source, tmp_path)
+
+        destination = tmp_path / record["path"]
+
+        assert record["status"] == "downloaded"
+        assert record["bytes"] == len(document)
+        assert destination.read_bytes() == document
+        assert record["sha256"] == hashlib.sha256(document).hexdigest()
+        assert not temporary.exists()
+
+        assert len(requests) == 1
+        assert requests[0].headers["Range"] == f"bytes={len(partial)}-"
+
+    asyncio.run(run_test())
