@@ -17,6 +17,7 @@ from src.controlmap.ingest.fetch import (
     Source,
     _download,
     backoff_delay,
+    fetch_all,
     file_stem,
     pick_ext,
     read_sources,
@@ -354,5 +355,63 @@ def test_download_rejects_oversized_document(tmp_path):
 
         assert not list(raw_directory.rglob("*.part"))
         assert not list(raw_directory.rglob("*.pdf"))
+
+    asyncio.run(run_test())
+
+
+# --------------------------------------------------
+# 8. Resumption test
+# --------------------------------------------------
+
+
+def test_fetch_all_skips_already_downloaded_file(tmp_path):
+    async def run_test():
+        url = "https://example.com/report.pdf"
+
+        source = Source(
+            url=url,
+            source="example",
+            licence="Test licence",
+            title="Example Report",
+        )
+
+        # Simulate a document downloaded during an earlier run.
+        relative_path = f"data/raw/example/{file_stem(url)}.pdf"
+
+        downloaded_file = tmp_path / relative_path
+        downloaded_file.parent.mkdir(parents=True)
+        downloaded_file.write_bytes(b"Previously downloaded document")
+
+        # Record the successful download in the manifest.
+        manifest = Manifest(tmp_path / "data" / "manifest.jsonl")
+
+        await manifest.add(
+            {
+                "url": url,
+                "source": "example",
+                "title": "Example Report",
+                "licence": "Test licence",
+                "status": "downloaded",
+                "path": relative_path,
+            }
+        )
+
+        # Any HTTP request would mean the downloader failed to skip it.
+        def handler(request):
+            raise AssertionError(f"Unexpected HTTP request: {request.url}")
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            counts = await fetch_all(
+                sources=[source],
+                root=tmp_path,
+                client=client,
+            )
+
+        assert counts["skipped"] == 1
+        assert counts["downloaded"] == 0
+        assert counts["failed"] == 0
+
+        # Confirm the original file remains unchanged.
+        assert downloaded_file.read_bytes() == (b"Previously downloaded document")
 
     asyncio.run(run_test())
