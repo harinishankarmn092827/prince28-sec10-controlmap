@@ -37,3 +37,4 @@ alembic.ini.bak
 
 # Logs
 *.log
+data/raw/
