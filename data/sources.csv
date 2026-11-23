@@ -1,0 +1,11 @@
+url,source,licence,title
+https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json,nist-oscal,NIST publication; public domain,SP 800-53 Revision 5 Catalog
+https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_LOW-baseline_profile.json,nist-oscal,NIST publication; public domain,SP 800-53 Low Baseline
+https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_MODERATE-baseline_profile.json,nist-oscal,NIST publication; public domain,SP 800-53 Moderate Baseline
+https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_HIGH-baseline_profile.json,nist-oscal,NIST publication; public domain,SP 800-53 High Baseline
+https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=957258,nist-csf,NIST publication; public domain,NIST Cybersecurity Framework 2.0
+https://nvlpubs.nist.gov/nistpubs/specialpublications/NIST.SP.800-53r5.pdf,nist-publications,NIST publication; public domain,Security and Privacy Controls SP 800-53 Revision 5
+https://www.sebi.gov.in/sebi_data/attachdocs/aug-2024/1724326790365.pdf,sebi-cscrf,Publicly accessible; reuse terms require verification,SEBI CSCRF Circular August 2024
+https://www.sebi.gov.in/sebi_data/attachdocs/dec-2024/1735646756843.pdf,sebi-cscrf,Publicly accessible; reuse terms require verification,SEBI CSCRF Clarifications December 2024
+https://www.sebi.gov.in/sebi_data/attachdocs/apr-2025/1746016112057.pdf,sebi-cscrf,Publicly accessible; reuse terms require verification,SEBI CSCRF Clarifications April 2025
+https://www.sebi.gov.in/sebi_data/attachdocs/aug-2025/1756380695925.pdf,sebi-cscrf,Publicly accessible; reuse terms require verification,SEBI CSCRF Technical Clarifications August 2025

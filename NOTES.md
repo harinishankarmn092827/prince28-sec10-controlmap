@@ -172,3 +172,31 @@ Before submission, verify that the tag points to the intended release commit and
 - [x] Latest application commit verified.
 - [x] README deployment and monitoring documentation merged.
 - [ ] Nightly health-check run verified
+
+## D06 — Document Collection Pipeline
+
+### Implementation
+- Added the asynchronous document fetcher under
+  `src/controlmap/ingest/fetch.py`.
+- Added `scripts/fetch.py` for URL lists, repositories, sitemaps,
+  and manual collection workflows.
+- Configured ten source URLs in `data/sources.csv`.
+- Added fetcher unit tests and manifest-based download tracking.
+- Added retries, concurrency limits, and content-type-aware
+  file extension handling.
+
+### Collection results
+- The manifest records collected source files.
+- The corpus includes NIST OSCAL JSON, NIST PDF publications,
+  and SEBI CSCRF PDFs plus previously retained HTML landing pages.
+- NIST documents are noted as public domain; SEBI reuse terms
+  require verification.
+- Generate dataset and capacity reports using
+  `uv run python scripts/dataset_report.py`.
+
+### Verification
+- Fetcher unit tests: 21 passed in the last recorded run.
+- Full unit test suite: 25 passed in the last recorded run.
+- Ruff lint passed in the last recorded run.
+- PDF signatures and page counts were checked during collection.
+- Re-run tests after subsequent code or data changes.
