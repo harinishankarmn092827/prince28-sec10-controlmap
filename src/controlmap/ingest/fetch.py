@@ -327,54 +327,163 @@ async def _download(
     root: Path,
     max_bytes: int = MAX_BYTES,
 ) -> dict:
-    """Stream a single response to a temporary file, then rename it."""
+    """Download a document and resume an existing partial download."""
     relative_directory = Path("data") / "raw" / slug(source.source)
     output_directory = root / relative_directory
     output_directory.mkdir(parents=True, exist_ok=True)
 
     filename = file_stem(source.url)
+    temporary = output_directory / f"{filename}.download.part"
+
+    destination: Path | None = None
+    content_type = ""
+    http_status = 0
+
+    for restart in range(2):
+        existing_size = temporary.stat().st_size if temporary.exists() else 0
+
+        if existing_size > max_bytes:
+            temporary.unlink(missing_ok=True)
+            existing_size = 0
+
+        headers = {"Accept-Encoding": "identity"}
+
+        if existing_size:
+            headers["Range"] = f"bytes={existing_size}-"
+
+        try:
+            async with client.stream(
+                "GET",
+                source.url,
+                headers=headers,
+                timeout=30,
+            ) as response:
+                http_status = response.status_code
+
+                # The existing partial file is no longer valid.
+                if http_status == 416 and existing_size > 0 and restart == 0:
+                    temporary.unlink(missing_ok=True)
+                    continue
+
+                response.raise_for_status()
+
+                total_text: str | None = None
+                range_start = 0
+                range_end = -1
+
+                if http_status == 206:
+                    content_range = response.headers.get("Content-Range", "")
+                    match = re.fullmatch(
+                        r"bytes (\d+)-(\d+)/(\d+|\*)",
+                        content_range,
+                    )
+
+                    if not match:
+                        raise DownloadError("Missing or invalid Content-Range header")
+
+                    range_start = int(match.group(1))
+                    range_end = int(match.group(2))
+                    total_text = match.group(3)
+
+                    if range_start != existing_size or range_end < range_start:
+                        raise DownloadError("Server returned an unexpected byte range")
+
+                    if total_text != "*":
+                        total_size = int(total_text)
+
+                        if range_end >= total_size:
+                            raise DownloadError("Invalid total size in Content-Range")
+
+                        if total_size > max_bytes:
+                            raise DownloadError(
+                                f"Document exceeds the {max_bytes}-byte limit"
+                            )
+
+                    mode = "ab"
+
+                elif http_status == 200:
+                    # The server ignored Range; restart from the beginning.
+                    existing_size = 0
+                    mode = "wb"
+
+                else:
+                    raise DownloadError(f"Unexpected HTTP status: {http_status}")
+
+                content_type = response.headers.get("content-type", "")
+                extension = pick_ext(source.url, content_type)
+                destination = output_directory / f"{filename}{extension}"
+
+                size = existing_size
+                response_bytes = 0
+
+                try:
+                    with temporary.open(mode) as file:
+                        async for chunk in response.aiter_bytes():
+                            size += len(chunk)
+                            response_bytes += len(chunk)
+
+                            if size > max_bytes:
+                                raise DownloadError(
+                                    f"Document exceeds the {max_bytes}-byte limit"
+                                )
+
+                            file.write(chunk)
+
+                except DownloadError:
+                    # An oversized document must not leave a partial file.
+                    temporary.unlink(missing_ok=True)
+                    raise
+
+                # Verify that the resumed range is complete.
+                if http_status == 206:
+                    expected_bytes = range_end - range_start + 1
+
+                    if response_bytes != expected_bytes:
+                        raise DownloadError(
+                            "Incomplete response for resumed byte range"
+                        )
+
+                    if total_text != "*":
+                        if size != int(total_text):
+                            raise DownloadError(
+                                "Download is incomplete; more bytes are expected"
+                            )
+
+                break
+
+        except DownloadError:
+            # Invalid or oversized downloads must not leave unusable files.
+            if temporary.exists() and temporary.stat().st_size > max_bytes:
+                temporary.unlink(missing_ok=True)
+            raise
+
+        except Exception:
+            # Preserve partial files after network interruptions.
+            if temporary.exists() and temporary.stat().st_size > max_bytes:
+                temporary.unlink(missing_ok=True)
+            raise
+
+    else:
+        raise DownloadError("Unable to restart the partial download")
+
+    if destination is None or not temporary.exists():
+        raise DownloadError("Download did not produce a destination")
+
+    # Hash the complete file, including previously downloaded bytes.
     digest = hashlib.sha256()
     size = 0
 
-    destination: Path | None = None
-    temporary: Path | None = None
+    with temporary.open("rb") as file:
+        while chunk := file.read(1024 * 1024):
+            size += len(chunk)
 
-    try:
-        # One GET request per attempt; stream its response to disk.
-        async with client.stream(
-            "GET",
-            source.url,
-            timeout=30,
-        ) as response:
-            response.raise_for_status()
+            if size > max_bytes:
+                temporary.unlink(missing_ok=True)
+                raise DownloadError(f"Document exceeds the {max_bytes}-byte limit")
 
-            content_type = response.headers.get("content-type", "")
-            extension = pick_ext(source.url, content_type)
+            digest.update(chunk)
 
-            destination = output_directory / f"{filename}{extension}"
-            temporary = destination.with_suffix(destination.suffix + ".part")
-
-            with temporary.open("wb") as file:
-                async for chunk in response.aiter_bytes():
-                    size += len(chunk)
-
-                    if size > max_bytes:
-                        raise DownloadError(
-                            f"Document exceeds the {max_bytes}-byte limit"
-                        )
-
-                    digest.update(chunk)
-                    file.write(chunk)
-
-            http_status = response.status_code
-
-        # Expose the final file only after the complete response is written.
-        temporary.replace(destination)
-
-    except Exception:
-        if temporary is not None:
-            temporary.unlink(missing_ok=True)
-        raise
+    temporary.replace(destination)
 
     return {
         "url": source.url,
@@ -451,7 +560,11 @@ async def fetch_one(
 
             await sleep(wait if wait is not None else backoff_delay(attempt))
 
-        except (httpx.TimeoutException, httpx.NetworkError):
+        except (
+            httpx.TimeoutException,
+            httpx.NetworkError,
+            httpx.ReadError,
+        ):
             if attempt == max_attempts - 1:
                 return {
                     **record_base,
