@@ -17,11 +17,11 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Use an explicitly supplied database URL when available.
-# Otherwise, fall back to the application database URL.
+# Use the application database URL when Alembic has only
+# the default placeholder URL configured.
 database_url = config.get_main_option("sqlalchemy.url")
 
-if not database_url:
+if not database_url or database_url.startswith("driver://"):
     database_url = str(settings.database_url)
 
 config.set_main_option(
@@ -70,6 +70,7 @@ async def run_async_migrations() -> None:
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args={"ssl": "require"},
     )
 
     async with connectable.connect() as connection:

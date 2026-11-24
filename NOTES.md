@@ -193,14 +193,16 @@ Before submission, verify that the tag points to the intended release commit and
   require verification.
 - Generate dataset and capacity reports using
   `uv run python scripts/dataset_report.py`.
-
 ### Verification
-- Fetcher unit tests: 21 passed in the last recorded run.
-- Full unit test suite: 25 passed in the last recorded run.
-- Ruff lint passed in the last recorded run.
-- PDF signatures and page counts were checked during collection.
-- Re-run tests after subsequent code or data changes.
-
+- Fetcher unit tests: 23 passed in the latest targeted run.
+- Full unit test suite: 27 passed in the latest run.
+- Ruff lint: passed.
+- The regression test `test_download_resumes_partial_file` verifies
+  resumption of a partial download using an HTTP Range request.
+- An isolated test confirmed the resumed response, final content,
+  SHA-256 checksum, and temporary-file cleanup.
+- Dataset report: 14 downloaded manifest records, 22.88 MB,
+  and 750 readable PDF pages.
 
 ### Downloader Repeat-Run Test
 
@@ -234,6 +236,10 @@ An isolated test used a mocked HTTP transport and a temporary directory to verif
 
 Two HTTP requests occurred during the first run: one for `robots.txt` and one for the document. The second run skipped the completed document without additional HTTP requests.
 
-**Conclusion:** The downloader correctly recognizes completed downloads and skips them on subsequent runs.
+**Conclusion:** The isolated test verified partial-download resumption
+using HTTP Range, correct final content, SHA-256 verification, and
+temporary-file cleanup. The permanent regression test
+`test_download_resumes_partial_file` also covers this behavior.
 
-**Limitation:** This test does not demonstrate recovery after interrupting an active download.
+**Limitation:** The isolated test uses a mocked HTTP transport. It
+does not establish recovery behavior for every real-world server.

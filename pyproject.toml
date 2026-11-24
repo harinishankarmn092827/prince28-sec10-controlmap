@@ -6,12 +6,16 @@ requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.20.1",
     "asyncpg>=0.32.0",
+    "beautifulsoup4>=4.15.0",
     "fastapi>=0.163.2",
     "httpx>=0.28.1",
     "protego>=0.7.0",
     "pydantic-settings>=2.16.3",
+    "pymupdf>=1.26,<2",
     "pypdf>=7.1.1",
+    "pyyaml>=6.0.3",
     "sqlalchemy[asyncio]>=2.1.9",
+    "trafilatura>=2.4.0",
     "uvicorn>=0.54.0",
 ]
 
