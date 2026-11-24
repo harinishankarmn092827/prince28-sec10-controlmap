@@ -1,4 +1,3 @@
-
 [project]
 name = "prince28-sec10-controlmap"
 version = "0.1.0"
@@ -29,6 +28,10 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.17.5",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+pythonpath = [".", "src"]
 
 [tool.ruff]
 line-length = 88
