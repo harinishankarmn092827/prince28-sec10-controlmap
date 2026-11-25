@@ -57,6 +57,12 @@ class LLMGateway:
             system_prompt if system_prompt is not None else self._load_system_prompt()
         )
 
+        # Metadata from the most recently completed streaming request.
+        self.last_provider = "gateway"
+        self.last_model = "primary-with-fallback"
+        self.last_prompt_tokens = 0
+        self.last_completion_tokens = 0
+
     @staticmethod
     def _load_system_prompt() -> str:
         """Load the versioned system prompt from disk."""
@@ -145,7 +151,7 @@ class LLMGateway:
         raise RuntimeError("All LLM providers failed: " + "; ".join(errors))
 
     async def stream(self, messages: list[dict[str, str]]) -> AsyncIterator[str]:
-        """Stream response text, falling back before output if a provider fails."""
+        """Stream response text and capture available provider usage metadata."""
         request_messages = [
             {"role": "system", "content": self.system_prompt},
             *messages,
@@ -158,9 +164,17 @@ class LLMGateway:
 
         errors: list[str] = []
 
+        # Reset metadata before each streaming request.
+        self.last_provider = "gateway"
+        self.last_model = "primary-with-fallback"
+        self.last_prompt_tokens = 0
+        self.last_completion_tokens = 0
+
         for provider, client, model in providers:
             stream = None
             output_started = False
+            prompt_tokens = 0
+            completion_tokens = 0
 
             try:
                 async with asyncio.timeout(self.timeout_seconds):
@@ -168,9 +182,20 @@ class LLMGateway:
                         model=model,
                         messages=request_messages,
                         stream=True,
+                        stream_options={"include_usage": True},
                     )
 
                     async for chunk in stream:
+                        # Some providers send usage in a final chunk
+                        # that contains no choices.
+                        usage = getattr(chunk, "usage", None)
+
+                        if usage is not None:
+                            prompt_tokens = int(getattr(usage, "prompt_tokens", 0) or 0)
+                            completion_tokens = int(
+                                getattr(usage, "completion_tokens", 0) or 0
+                            )
+
                         if not chunk.choices:
                             continue
 
@@ -184,6 +209,12 @@ class LLMGateway:
                 if not output_started:
                     errors.append(f"{provider}: EmptyResponse")
                     continue
+
+                # Publish metadata only after the stream completes.
+                self.last_provider = provider
+                self.last_model = model
+                self.last_prompt_tokens = prompt_tokens
+                self.last_completion_tokens = completion_tokens
 
                 return
 
@@ -205,8 +236,10 @@ class LLMGateway:
                     if close is not None:
                         try:
                             result = close()
+
                             if hasattr(result, "__await__"):
                                 await result
+
                         except Exception:
                             # Cleanup errors must not hide the original outcome.
                             pass
