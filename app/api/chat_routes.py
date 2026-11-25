@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.database.connection import get_db
 from app.database.models import LLMCall
 from controlmap.llm.gateway import LLMGateway
@@ -20,6 +21,28 @@ from controlmap.llm.gateway import LLMGateway
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1", tags=["Chat"])
+
+# Estimated standard paid-tier pricing in USD per million tokens.
+# These rates are estimates and should be reviewed when provider pricing changes.
+MODEL_PRICING_USD_PER_MILLION: dict[str, tuple[float, float]] = {
+    "gemini-3.8-flash": (0.75, 3.75),
+    "openai/gpt-oss-20b": (0.075, 0.30),
+}
+
+
+def estimate_cost_inr(
+    model: str,
+    prompt_tokens: int,
+    completion_tokens: int,
+) -> float:
+    """Estimate request cost in INR from token counts and configured rates."""
+    input_rate, output_rate = MODEL_PRICING_USD_PER_MILLION.get(model, (0.0, 0.0))
+
+    cost_usd = (
+        max(0, prompt_tokens) * input_rate + max(0, completion_tokens) * output_rate
+    ) / 1_000_000
+
+    return round(cost_usd * settings.usd_inr, 6)
 
 
 class ChatMessage(BaseModel):
@@ -44,6 +67,8 @@ class UsageSummary(BaseModel):
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
+    estimated_cost_inr: float
+    fallback_requests: int
 
 
 async def record_call(
@@ -57,8 +82,16 @@ async def record_call(
     error_type: str | None = None,
     prompt_tokens: int = 0,
     completion_tokens: int = 0,
+    fallback_used: bool = False,
+    prompt_version: str = "chat_system_v1",
 ) -> None:
     """Persist usage metadata without storing prompt or response text."""
+    cost_inr = estimate_cost_inr(
+        model,
+        prompt_tokens,
+        completion_tokens,
+    )
+
     session.add(
         LLMCall(
             request_id=request_id,
@@ -69,6 +102,9 @@ async def record_call(
             error_type=error_type,
             prompt_tokens=max(0, prompt_tokens),
             completion_tokens=max(0, completion_tokens),
+            cost_inr=cost_inr,
+            fallback_used=fallback_used,
+            prompt_version=prompt_version,
         )
     )
     await session.commit()
@@ -138,6 +174,8 @@ async def chat(
                     error_type=error_type,
                     prompt_tokens=gateway.last_prompt_tokens,
                     completion_tokens=gateway.last_completion_tokens,
+                    fallback_used=gateway.last_fallback_used,
+                    prompt_version=gateway.prompt_version,
                 )
             except Exception:
                 logger.exception(
@@ -167,6 +205,8 @@ async def usage(
         func.count(LLMCall.id).filter(LLMCall.success.is_(False)),
         func.coalesce(func.sum(LLMCall.prompt_tokens), 0),
         func.coalesce(func.sum(LLMCall.completion_tokens), 0),
+        func.coalesce(func.sum(LLMCall.cost_inr), 0.0),
+        func.count(LLMCall.id).filter(LLMCall.fallback_used.is_(True)),
     )
 
     try:
@@ -189,4 +229,6 @@ async def usage(
         prompt_tokens=prompt_tokens,
         completion_tokens=completion_tokens,
         total_tokens=prompt_tokens + completion_tokens,
+        estimated_cost_inr=round(float(row[5]), 6),
+        fallback_requests=int(row[6]),
     )
