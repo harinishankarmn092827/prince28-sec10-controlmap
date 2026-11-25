@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.connection import get_db
 from app.database.models import LLMCall
-from src.controlmap.llm.gateway import LLMGateway
+from controlmap.llm.gateway import LLMGateway
 
 logger = logging.getLogger(__name__)
 

@@ -3,6 +3,7 @@ FROM python:3.13-slim AS builder
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
+
 WORKDIR /app
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
@@ -17,6 +18,7 @@ FROM python:3.13-slim AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH="/app/src:/app" \
     PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
@@ -30,6 +32,7 @@ RUN groupadd --system appgroup \
 COPY --from=builder --chown=appuser:appgroup /app/.venv /app/.venv
 
 COPY --chown=appuser:appgroup app/ /app/app/
+COPY --chown=appuser:appgroup src/ /app/src/
 COPY --chown=appuser:appgroup scripts/ /app/scripts/
 COPY --chown=appuser:appgroup migrations/ /app/migrations/
 COPY --chown=appuser:appgroup alembic.ini /app/alembic.ini
