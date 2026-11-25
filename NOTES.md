@@ -243,3 +243,63 @@ temporary-file cleanup. The permanent regression test
 
 **Limitation:** The isolated test uses a mocked HTTP transport. It
 does not establish recovery behavior for every real-world server.
+## D07 — Document Parsing and Storage
+
+### Implementation
+- Added `src/controlmap/ingest/store.py` to store parsed documents and page metadata in the database.
+- Added `scripts/parse_corpus.py` to parse supported documents from the collected corpus.
+- Added `tests/unit/test_store.py` to test document storage, duplicate detection, and parse-failure tracking.
+- Page metadata includes page numbers, heading paths, headings, and extracted tables.
+
+### Corpus Parsing Verification
+- Ran `scripts/parse_corpus.py --dry-run`.
+- Documents discovered: 15.
+- Successfully parsed: 15.
+- Failed: 0.
+- Database changes: None; this was a dry run.
+- Supported formats in the corpus include PDF, JSON, and HTML.
+
+### PDF Parser Comparison
+
+**Method:** Compared PyMuPDF and pypdf on all six PDFs available in `data/raw` at the time of testing.
+
+**Script:** `scripts/compare_parsers.py`
+
+**Results:** `data/parser_comparison.csv`
+
+| Metric | PyMuPDF | pypdf |
+|---|---:|---:|
+| PDFs tested | 6 | 6 |
+| Total pages | 750 | 750 |
+| Extracted characters | 2,875,078 | 2,097,499 |
+| Empty pages | 0 | 0 |
+| Total execution time | 15.7569 seconds | 40.3584 seconds |
+
+**Findings**
+- Both parsers successfully processed all six PDFs.
+- Both reported the same total page count, with no empty pages.
+- PyMuPDF extracted approximately 37.1% more characters than pypdf.
+- PyMuPDF completed the comparison in approximately 61.0% less time.
+- Character count and execution time are indicators, not proof of extraction accuracy.
+- PyMuPDF remains the primary parser because it performed better in this initial comparison and also supports the existing heading and table extraction logic.
+
+**Scope limitation:** Six PDFs were available. The comparison does not satisfy a requirement to test ten PDFs. Additional PDFs must be obtained before claiming a ten-PDF comparison.
+
+### Automated Verification
+- Unit tests: 38 passed.
+- Ruff lint: passed.
+- Ruff formatting check: passed for `scripts/parse_corpus.py`, `src/controlmap/ingest/store.py`, and `tests/unit/test_store.py`.
+- Pre-commit checks passed when committing the parsing and storage implementation.
+
+### Outstanding Work
+### Database and Metadata Validation
+
+- The configured Neon database contains 37 documents and 1,936 pages.
+- A corpus parsing dry run discovered 15 documents, parsed all 15 successfully, and reported zero failures.
+- Subsequent corpus runs skipped the 15 documents as duplicates.
+- Database metadata inspection found that heading and table metadata are not consistently populated.
+- Compared local corpus files with database records using SHA-256 hashes. Fifteen documents matched.
+- A read-only alignment check found substantial text differences between the current parser output and existing database pages. Bulk metadata backfill is deferred until these differences are understood.
+- PDF parser comparison covered six PDFs, not the target of ten. This limitation remains documented.
+- No bulk metadata backfill has been performed.
+- Further work: investigate extraction differences, validate metadata quality, and expand the parser comparison to ten PDFs if additional suitable documents become available.
