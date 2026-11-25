@@ -57,11 +57,13 @@ class LLMGateway:
             system_prompt if system_prompt is not None else self._load_system_prompt()
         )
 
-        # Metadata from the most recently completed streaming request.
+        # Metadata from the most recently completed request.
         self.last_provider = "gateway"
         self.last_model = "primary-with-fallback"
         self.last_prompt_tokens = 0
         self.last_completion_tokens = 0
+        self.last_fallback_used = False
+        self.prompt_version = "chat_system_v1"
 
     @staticmethod
     def _load_system_prompt() -> str:
@@ -151,7 +153,7 @@ class LLMGateway:
         raise RuntimeError("All LLM providers failed: " + "; ".join(errors))
 
     async def stream(self, messages: list[dict[str, str]]) -> AsyncIterator[str]:
-        """Stream response text and capture available provider usage metadata."""
+        """Stream response text and capture provider usage metadata."""
         request_messages = [
             {"role": "system", "content": self.system_prompt},
             *messages,
@@ -169,6 +171,7 @@ class LLMGateway:
         self.last_model = "primary-with-fallback"
         self.last_prompt_tokens = 0
         self.last_completion_tokens = 0
+        self.last_fallback_used = False
 
         for provider, client, model in providers:
             stream = None
@@ -215,12 +218,14 @@ class LLMGateway:
                 self.last_model = model
                 self.last_prompt_tokens = prompt_tokens
                 self.last_completion_tokens = completion_tokens
+                self.last_fallback_used = provider == "groq"
 
                 return
 
             except (APIError, asyncio.TimeoutError, TimeoutError) as exc:
                 errors.append(f"{provider}: {type(exc).__name__}")
 
+                # Never switch providers after sending partial output.
                 if output_started:
                     raise RuntimeError(
                         f"Streaming failed after output began ({provider})."
