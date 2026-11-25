@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime
+import time
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -59,7 +59,6 @@ async def record_call(
     completion_tokens: int = 0,
 ) -> None:
     """Persist usage metadata without storing prompt or response text."""
-
     session.add(
         LLMCall(
             request_id=request_id,
@@ -72,7 +71,6 @@ async def record_call(
             completion_tokens=max(0, completion_tokens),
         )
     )
-
     await session.commit()
 
 
@@ -83,16 +81,17 @@ async def chat(
     session: AsyncSession = Depends(get_db),
 ):
     """Stream a chat response as Server-Sent Events."""
-
     request_id = request.state.request_id
     messages = [message.model_dump() for message in payload.messages]
 
     async def event_stream():
         gateway = LLMGateway()
-        started = datetime.now().astimezone()
+        started = time.perf_counter()
         output_started = False
+        request_succeeded = False
+        error_type = None
 
-        yield (f"event: metadata\ndata: {json.dumps({'request_id': request_id})}\n\n")
+        yield f"event: metadata\ndata: {json.dumps({'request_id': request_id})}\n\n"
 
         try:
             async for chunk in gateway.stream(messages):
@@ -102,15 +101,17 @@ async def chat(
             if not output_started:
                 raise RuntimeError("The LLM providers returned an empty response.")
 
+            request_succeeded = True
             yield "event: done\ndata: {}\n\n"
 
         except Exception:
+            error_type = "StreamError"
             logger.exception(
                 "Chat streaming failed",
                 extra={"request_id": request_id},
             )
 
-            # Do not expose provider error details, credentials, or internals.
+            # Never expose provider errors, credentials, or internal details.
             yield (
                 "event: error\n"
                 + "data: "
@@ -124,22 +125,19 @@ async def chat(
             )
 
         finally:
-            # This initial implementation records the request outcome.
-            # Provider-level details and token counts will be added when
-            # the gateway exposes per-attempt streaming metadata.
-            elapsed_ms = int(
-                (datetime.now().astimezone() - started).total_seconds() * 1000
-            )
+            elapsed_ms = int((time.perf_counter() - started) * 1000)
 
             try:
                 await record_call(
                     session,
                     request_id=request_id,
-                    provider="gateway",
-                    model="primary-with-fallback",
+                    provider=gateway.last_provider,
+                    model=gateway.last_model,
                     latency_ms=elapsed_ms,
-                    success=output_started,
-                    error_type=None if output_started else "StreamError",
+                    success=request_succeeded,
+                    error_type=error_type,
+                    prompt_tokens=gateway.last_prompt_tokens,
+                    completion_tokens=gateway.last_completion_tokens,
                 )
             except Exception:
                 logger.exception(
@@ -163,7 +161,6 @@ async def usage(
     session: AsyncSession = Depends(get_db),
 ) -> UsageSummary:
     """Return aggregate LLM usage statistics."""
-
     statement = select(
         func.count(LLMCall.id),
         func.count(LLMCall.id).filter(LLMCall.success.is_(True)),

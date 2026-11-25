@@ -105,3 +105,35 @@ def test_usage_returns_aggregated_statistics(client):
         "completion_tokens": 80,
         "total_tokens": 200,
     }
+
+
+def test_chat_records_provider_and_token_usage(client):
+    """The chat endpoint should persist provider, model, and token counts."""
+
+    async def fake_stream(messages):
+        yield "Tracked response"
+
+    with patch("app.api.chat_routes.LLMGateway") as gateway_class:
+        gateway = gateway_class.return_value
+        gateway.last_provider = "gemini"
+        gateway.last_model = "test-model"
+        gateway.last_prompt_tokens = 15
+        gateway.last_completion_tokens = 7
+        gateway.stream.side_effect = fake_stream
+
+        response = client.post(
+            "/v1/chat",
+            json={"messages": [{"role": "user", "content": "Hello"}]},
+        )
+
+    assert response.status_code == 200
+    assert "Tracked response" in response.text
+
+    session = app.dependency_overrides[get_db]()
+    saved_call = session.add.call_args.args[0]
+
+    assert saved_call.provider == "gemini"
+    assert saved_call.model == "test-model"
+    assert saved_call.prompt_tokens == 15
+    assert saved_call.completion_tokens == 7
+    assert saved_call.success is True
