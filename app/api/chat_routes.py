@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime
+import time
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -13,13 +13,36 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.database.connection import get_db
 from app.database.models import LLMCall
-from src.controlmap.llm.gateway import LLMGateway
+from controlmap.llm.gateway import LLMGateway
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1", tags=["Chat"])
+
+# Estimated standard paid-tier pricing in USD per million tokens.
+# These rates are estimates and should be reviewed when provider pricing changes.
+MODEL_PRICING_USD_PER_MILLION: dict[str, tuple[float, float]] = {
+    "gemini-3.8-flash": (0.75, 3.75),
+    "openai/gpt-oss-20b": (0.075, 0.30),
+}
+
+
+def estimate_cost_inr(
+    model: str,
+    prompt_tokens: int,
+    completion_tokens: int,
+) -> float:
+    """Estimate request cost in INR from token counts and configured rates."""
+    input_rate, output_rate = MODEL_PRICING_USD_PER_MILLION.get(model, (0.0, 0.0))
+
+    cost_usd = (
+        max(0, prompt_tokens) * input_rate + max(0, completion_tokens) * output_rate
+    ) / 1_000_000
+
+    return round(cost_usd * settings.usd_inr, 6)
 
 
 class ChatMessage(BaseModel):
@@ -44,6 +67,8 @@ class UsageSummary(BaseModel):
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
+    estimated_cost_inr: float
+    fallback_requests: int
 
 
 async def record_call(
@@ -57,8 +82,15 @@ async def record_call(
     error_type: str | None = None,
     prompt_tokens: int = 0,
     completion_tokens: int = 0,
+    fallback_used: bool = False,
+    prompt_version: str = "chat_system_v1",
 ) -> None:
     """Persist usage metadata without storing prompt or response text."""
+    cost_inr = estimate_cost_inr(
+        model,
+        prompt_tokens,
+        completion_tokens,
+    )
 
     session.add(
         LLMCall(
@@ -70,9 +102,11 @@ async def record_call(
             error_type=error_type,
             prompt_tokens=max(0, prompt_tokens),
             completion_tokens=max(0, completion_tokens),
+            cost_inr=cost_inr,
+            fallback_used=fallback_used,
+            prompt_version=prompt_version,
         )
     )
-
     await session.commit()
 
 
@@ -83,16 +117,17 @@ async def chat(
     session: AsyncSession = Depends(get_db),
 ):
     """Stream a chat response as Server-Sent Events."""
-
     request_id = request.state.request_id
     messages = [message.model_dump() for message in payload.messages]
 
     async def event_stream():
         gateway = LLMGateway()
-        started = datetime.now().astimezone()
+        started = time.perf_counter()
         output_started = False
+        request_succeeded = False
+        error_type = None
 
-        yield (f"event: metadata\ndata: {json.dumps({'request_id': request_id})}\n\n")
+        yield f"event: metadata\ndata: {json.dumps({'request_id': request_id})}\n\n"
 
         try:
             async for chunk in gateway.stream(messages):
@@ -102,15 +137,17 @@ async def chat(
             if not output_started:
                 raise RuntimeError("The LLM providers returned an empty response.")
 
+            request_succeeded = True
             yield "event: done\ndata: {}\n\n"
 
         except Exception:
+            error_type = "StreamError"
             logger.exception(
                 "Chat streaming failed",
                 extra={"request_id": request_id},
             )
 
-            # Do not expose provider error details, credentials, or internals.
+            # Never expose provider errors, credentials, or internal details.
             yield (
                 "event: error\n"
                 + "data: "
@@ -124,22 +161,21 @@ async def chat(
             )
 
         finally:
-            # This initial implementation records the request outcome.
-            # Provider-level details and token counts will be added when
-            # the gateway exposes per-attempt streaming metadata.
-            elapsed_ms = int(
-                (datetime.now().astimezone() - started).total_seconds() * 1000
-            )
+            elapsed_ms = int((time.perf_counter() - started) * 1000)
 
             try:
                 await record_call(
                     session,
                     request_id=request_id,
-                    provider="gateway",
-                    model="primary-with-fallback",
+                    provider=gateway.last_provider,
+                    model=gateway.last_model,
                     latency_ms=elapsed_ms,
-                    success=output_started,
-                    error_type=None if output_started else "StreamError",
+                    success=request_succeeded,
+                    error_type=error_type,
+                    prompt_tokens=gateway.last_prompt_tokens,
+                    completion_tokens=gateway.last_completion_tokens,
+                    fallback_used=gateway.last_fallback_used,
+                    prompt_version=gateway.prompt_version,
                 )
             except Exception:
                 logger.exception(
@@ -163,13 +199,14 @@ async def usage(
     session: AsyncSession = Depends(get_db),
 ) -> UsageSummary:
     """Return aggregate LLM usage statistics."""
-
     statement = select(
         func.count(LLMCall.id),
         func.count(LLMCall.id).filter(LLMCall.success.is_(True)),
         func.count(LLMCall.id).filter(LLMCall.success.is_(False)),
         func.coalesce(func.sum(LLMCall.prompt_tokens), 0),
         func.coalesce(func.sum(LLMCall.completion_tokens), 0),
+        func.coalesce(func.sum(LLMCall.cost_inr), 0.0),
+        func.count(LLMCall.id).filter(LLMCall.fallback_used.is_(True)),
     )
 
     try:
@@ -192,4 +229,6 @@ async def usage(
         prompt_tokens=prompt_tokens,
         completion_tokens=completion_tokens,
         total_tokens=prompt_tokens + completion_tokens,
+        estimated_cost_inr=round(float(row[5]), 6),
+        fallback_requests=int(row[6]),
     )

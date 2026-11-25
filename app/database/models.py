@@ -5,6 +5,7 @@ from datetime import date, datetime
 from sqlalchemy import (
     Date,
     DateTime,
+    Float,
     ForeignKey,
     Index,
     Integer,
@@ -211,6 +212,29 @@ class LLMCall(Base):
     error_type: Mapped[str | None] = mapped_column(
         String(100),
         nullable=True,
+    )
+
+    # Estimated request cost in Indian rupees.
+    cost_inr: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0.0,
+        server_default="0",
+    )
+
+    # True when the fallback provider handled the request.
+    fallback_used: Mapped[bool] = mapped_column(
+        nullable=False,
+        default=False,
+        server_default=sql_text("false"),
+    )
+
+    # Version of the system prompt used for this request.
+    prompt_version: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        default="chat_system_v1",
+        server_default="chat_system_v1",
     )
 
     created_at: Mapped[datetime] = mapped_column(

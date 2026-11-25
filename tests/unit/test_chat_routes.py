@@ -87,11 +87,11 @@ def test_chat_returns_sse_error_when_gateway_fails(client):
 
 
 def test_usage_returns_aggregated_statistics(client):
-    """The usage endpoint should return aggregate counts and token totals."""
+    """The usage endpoint should return counts, tokens, cost, and fallback totals."""
     session = app.dependency_overrides[get_db]()
 
     result = Mock()
-    result.one.return_value = (5, 4, 1, 120, 80)
+    result.one.return_value = (5, 4, 1, 120, 80, 0.25, 2)
     session.execute.return_value = result
 
     response = client.get("/v1/usage")
@@ -104,4 +104,43 @@ def test_usage_returns_aggregated_statistics(client):
         "prompt_tokens": 120,
         "completion_tokens": 80,
         "total_tokens": 200,
+        "estimated_cost_inr": 0.25,
+        "fallback_requests": 2,
     }
+
+
+def test_chat_records_provider_and_token_usage(client):
+    """The chat endpoint should persist provider, model, and token counts."""
+
+    async def fake_stream(messages):
+        yield "Tracked response"
+
+    with patch("app.api.chat_routes.LLMGateway") as gateway_class:
+        gateway = gateway_class.return_value
+        gateway.last_provider = "gemini"
+        gateway.last_model = "test-model"
+        gateway.last_prompt_tokens = 15
+        gateway.last_completion_tokens = 7
+        gateway.last_fallback_used = False
+        gateway.prompt_version = "chat_system_v1"
+        gateway.stream.side_effect = fake_stream
+
+        response = client.post(
+            "/v1/chat",
+            json={"messages": [{"role": "user", "content": "Hello"}]},
+        )
+
+    assert response.status_code == 200
+    assert "Tracked response" in response.text
+
+    session = app.dependency_overrides[get_db]()
+    saved_call = session.add.call_args.args[0]
+
+    assert saved_call.provider == "gemini"
+    assert saved_call.model == "test-model"
+    assert saved_call.prompt_tokens == 15
+    assert saved_call.completion_tokens == 7
+    assert saved_call.success is True
+    assert saved_call.fallback_used is False
+    assert saved_call.prompt_version == "chat_system_v1"
+    assert isinstance(saved_call.cost_inr, float)

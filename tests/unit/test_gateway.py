@@ -227,3 +227,49 @@ async def test_stream_does_not_switch_provider_after_output():
 
     assert received == ["Partial answer"]
     fallback.chat.completions.create.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_stream_captures_usage_from_final_chunk():
+    """Capture token usage from a final chunk with no choices."""
+    primary = AsyncMock()
+    fallback = AsyncMock()
+
+    chunks = [
+        SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    delta=SimpleNamespace(content="Hello"),
+                )
+            ],
+            usage=None,
+        ),
+        SimpleNamespace(
+            choices=[],
+            usage=SimpleNamespace(
+                prompt_tokens=15,
+                completion_tokens=7,
+            ),
+        ),
+    ]
+
+    async def fake_stream():
+        for chunk in chunks:
+            yield chunk
+
+    primary.chat.completions.create.return_value = fake_stream()
+
+    gateway = make_gateway(primary, fallback)
+
+    result = [
+        chunk
+        async for chunk in gateway.stream([{"role": "user", "content": "Say hello"}])
+    ]
+
+    assert result == ["Hello"]
+    assert gateway.last_provider == "gemini"
+    assert gateway.last_model == gateway.primary_model
+    assert gateway.last_prompt_tokens == 15
+    assert gateway.last_completion_tokens == 7
+
+    fallback.chat.completions.create.assert_not_awaited()
