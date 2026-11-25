@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.api.chat_routes import router as chat_router
 from app.api.mapping_routes import router as mapping_router
 from app.api.routes import router
 from app.core.config import settings
@@ -112,6 +113,7 @@ def create_app() -> FastAPI:
 
     application.include_router(router)
     application.include_router(mapping_router)
+    application.include_router(chat_router)
 
     @application.get("/health")
     @application.head("/health")
