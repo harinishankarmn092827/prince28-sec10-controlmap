@@ -1,0 +1,13 @@
+filename,parser,status,pages,characters,empty_pages,elapsed_seconds,error
+get_pdf-daa5865a1b10.pdf,pymupdf,success,32,77885,0,0.8524,
+get_pdf-daa5865a1b10.pdf,pypdf,success,32,69548,0,1.4816,
+NIST.SP.800-53r5-7fc6e35ccb25.pdf,pymupdf,success,492,2241190,0,11.5566,
+NIST.SP.800-53r5-7fc6e35ccb25.pdf,pypdf,success,492,1651794,0,29.8937,
+1724326790365-0e5f1736091c.pdf,pymupdf,success,205,514384,0,2.9319,
+1724326790365-0e5f1736091c.pdf,pypdf,success,205,342474,0,8.1583,
+1735646756843-b5a27629686d.pdf,pymupdf,success,3,6405,0,0.088,
+1735646756843-b5a27629686d.pdf,pypdf,success,3,4898,0,0.1472,
+1746016112057-ff4cb7e48749.pdf,pymupdf,success,7,12792,0,0.1375,
+1746016112057-ff4cb7e48749.pdf,pypdf,success,7,10560,0,0.2979,
+1756380695925-f293cc73586c.pdf,pymupdf,success,11,22422,0,0.1905,
+1756380695925-f293cc73586c.pdf,pypdf,success,11,18225,0,0.3797,
