@@ -30,8 +30,10 @@ RUN groupadd --system appgroup \
 COPY --from=builder --chown=appuser:appgroup /app/.venv /app/.venv
 
 COPY --chown=appuser:appgroup app/ /app/app/
+COPY --chown=appuser:appgroup src/ /app/src/
 COPY --chown=appuser:appgroup scripts/ /app/scripts/
 COPY --chown=appuser:appgroup migrations/ /app/migrations/
+COPY --chown=appuser:appgroup prompts/ /app/prompts/
 COPY --chown=appuser:appgroup alembic.ini /app/alembic.ini
 
 USER appuser
