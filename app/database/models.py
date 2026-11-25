@@ -154,3 +154,68 @@ class ParseFailure(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+
+class LLMCall(Base):
+    """Record LLM provider requests and usage statistics."""
+
+    __tablename__ = "llm_calls"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    request_id: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+        index=True,
+    )
+
+    provider: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+    )
+
+    model: Mapped[str] = mapped_column(
+        String(150),
+        nullable=False,
+    )
+
+    prompt_tokens: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+    )
+
+    completion_tokens: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+    )
+
+    latency_ms: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    success: Mapped[bool] = mapped_column(
+        nullable=False,
+        default=True,
+        server_default=sql_text("true"),
+    )
+
+    error_type: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        index=True,
+    )
