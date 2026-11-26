@@ -303,3 +303,33 @@ does not establish recovery behavior for every real-world server.
 - PDF parser comparison covered six PDFs, not the target of ten. This limitation remains documented.
 - No bulk metadata backfill has been performed.
 - Further work: investigate extraction differences, validate metadata quality, and expand the parser comparison to ten PDFs if additional suitable documents become available.
+
+## D08 — LLM Gateway Verification
+
+### Automated verification
+
+- Unit tests: 58 passed.
+- Ruff linting: passed (`uv run ruff check .`).
+- Gateway tests cover primary-provider generation, retries, exponential backoff with jitter, provider fallback, circuit-breaker behavior, streaming, and token-usage capture.
+
+### Live deployment verification
+
+- Live `/health` endpoint previously returned a healthy status.
+- `/v1/chat` returned a streamed AI response.
+- The stream included request metadata and terminated with `event: done`.
+- `/v1/usage` reflected one additional successful request.
+- Usage deltas observed: 446 prompt tokens, 70 completion tokens, and 516 total tokens.
+- Estimated cost increased by ₹0.005173.
+- The fallback counter increased by one.
+
+### Outstanding verification
+
+- Confirm the actual primary and fallback providers from provider-level logs.
+- Verify retry and circuit-breaker behavior with targeted experiments.
+- Confirm the official D08 lab evaluator status.
+
+### Notes
+
+- Live usage values are observations from the test request, not permanent totals.
+- The aggregate fallback counter alone does not prove which providers handled the request.
+- Automated unit tests passing does not replace the remaining live experiments.
