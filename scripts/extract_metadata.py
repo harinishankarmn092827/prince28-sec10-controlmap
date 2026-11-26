@@ -140,12 +140,14 @@ async def run(args: argparse.Namespace) -> int:
         print(f"Previously skipped documents: {counts['skipped']}")
 
         for index, document in enumerate(candidates):
+            document_id = document.id
+
             metadata = dict(document.document_metadata or {})
             source_text = document_text(document)
 
             print(
                 f"[{index + 1}/{len(candidates)}] "
-                f"Extracting document {document.id}: {document.title[:100]}"
+                f"Extracting document {document_id}: {document.title[:100]}"
             )
 
             try:
@@ -184,7 +186,7 @@ async def run(args: argparse.Namespace) -> int:
                 await session.rollback()
 
                 # Reload the current document before recording the failure.
-                refreshed = await session.get(Document, document.id)
+                refreshed = await session.get(Document, document_id)
 
                 if refreshed is not None:
                     refreshed_metadata = dict(refreshed.document_metadata or {})
