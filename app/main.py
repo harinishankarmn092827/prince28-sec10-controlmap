@@ -12,6 +12,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.api.chat_routes import router as chat_router
 from app.api.mapping_routes import router as mapping_router
 from app.api.routes import router
+from app.api.source_document_routes import router as source_document_router
 from app.core.config import settings
 from app.core.logging import request_id_context, setup_logging
 from app.database.connection import AsyncSessionLocal
@@ -114,6 +115,7 @@ def create_app() -> FastAPI:
     application.include_router(router)
     application.include_router(mapping_router)
     application.include_router(chat_router)
+    application.include_router(source_document_router)
 
     @application.get("/health")
     @application.head("/health")

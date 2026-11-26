@@ -394,3 +394,28 @@ async def test_stream_captures_usage_from_final_chunk():
     assert gateway.last_completion_tokens == 7
 
     fallback.chat.completions.create.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_generate_passes_structured_json_response_format():
+    """Pass JSON response format through to the provider."""
+    primary = AsyncMock()
+    fallback = AsyncMock()
+    primary.chat.completions.create.return_value = make_response(
+        content='{"label":"docs","reason":"Security question"}'
+    )
+
+    gateway = make_gateway(primary, fallback)
+    response_format = {"type": "json_object"}
+
+    result = await gateway.generate(
+        [{"role": "user", "content": "Classify this question"}],
+        response_format=response_format,
+    )
+
+    assert result.content == '{"label":"docs","reason":"Security question"}'
+
+    call = primary.chat.completions.create.await_args
+    assert call.kwargs["response_format"] == response_format
+    assert call.kwargs["stream"] is False
+    fallback.chat.completions.create.assert_not_awaited()

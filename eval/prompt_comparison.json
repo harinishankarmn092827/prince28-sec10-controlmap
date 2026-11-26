@@ -1,0 +1,42 @@
+{
+  "testset": "eval\\prompt_testset.jsonl",
+  "question_count": 20,
+  "results": [
+    {
+      "version": 1,
+      "total_questions": 20,
+      "evaluated": 20,
+      "correct": 20,
+      "accuracy": 1.0,
+      "errors": 0,
+      "misses": []
+    },
+    {
+      "version": 2,
+      "total_questions": 20,
+      "evaluated": 20,
+      "correct": 20,
+      "accuracy": 1.0,
+      "errors": 0,
+      "misses": []
+    },
+    {
+      "version": 3,
+      "total_questions": 20,
+      "evaluated": 20,
+      "correct": 20,
+      "accuracy": 1.0,
+      "errors": 0,
+      "misses": []
+    },
+    {
+      "version": 4,
+      "total_questions": 20,
+      "evaluated": 20,
+      "correct": 20,
+      "accuracy": 1.0,
+      "errors": 0,
+      "misses": []
+    }
+  ]
+}

@@ -333,3 +333,43 @@ does not establish recovery behavior for every real-world server.
 - Live usage values are observations from the test request, not permanent totals.
 - The aggregate fallback counter alone does not prove which providers handled the request.
 - Automated unit tests passing does not replace the remaining live experiments.
+## D09 - Versioned Prompts and Question Classification
+
+### Prompt evaluation
+
+- Test set: `eval/prompt_testset.jsonl`.
+- Total labelled questions: 20.
+- Label distribution: 10 docs, 5 personal, and 5 off_topic.
+- Evaluation script: `scripts/compare_prompts.py`.
+- Results report: `eval/prompt_comparison.json`.
+- Responses are cached under `eval/cache/` to avoid unnecessary repeated API calls.
+
+| Prompt version | Correct | Total | Accuracy | Errors |
+|---|---:|---:|---:|---:|
+| classify_v1 | 20 | 20 | 100.0% | 0 |
+| classify_v2 | 20 | 20 | 100.0% | 0 |
+| classify_v3 | 20 | 20 | 100.0% | 0 |
+| classify_v4 | 20 | 20 | 100.0% | 0 |
+
+### Findings and limitations
+
+- All four versions achieved 20/20 on the current test set.
+- The versions have identical measured accuracy on these 20 questions. The results do not establish that a newer version generalizes better to unseen questions.
+- Later prompt versions refine classification guidance, ambiguity handling, and resistance to prompt injection.
+- Structured JSON output is requested, and classification responses are validated before being returned.
+- The test set is small. Further evaluation with unseen questions and adversarial examples is needed before making broader accuracy claims.
+
+### Implementation
+
+- Added a versioned prompt loader in `src/controlmap/llm/prompts.py`.
+- Added the question classifier in `src/controlmap/llm/classify.py`.
+- Added four classifier prompts under `prompts/`.
+- Added labelled evaluation data and a comparison script.
+- Added classifier unit tests and structured-response-format gateway coverage.
+
+### Verification
+
+- Evaluated classifier versions 1 through 4 using `scripts/compare_prompts.py --versions 1 2 3 4`.
+- Confirmed that `eval/prompt_comparison.json` contains versions 1, 2, 3, and 4.
+- Each version scored 20/20 with zero errors in the recorded run.
+- Implemented document-metadata extraction and source-document API filters; endpoint registration and all seven query parameters verified through OpenAPI.
