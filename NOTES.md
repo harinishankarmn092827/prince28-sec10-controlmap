@@ -384,21 +384,53 @@ does not establish recovery behavior for every real-world server.
 - Document text is treated as untrusted input, and the extraction prompt instructs the model not to follow instructions embedded in source documents.
 
 #### Extraction Results
-- The source corpus contained 17 eligible source documents in the recorded run.
-- Initial extraction succeeded for 13 documents and failed for 4.
-- A retry run selected the 4 failed documents and skipped the 13 previously successful documents.
-- The retry run succeeded for 1 additional document and failed for 3.
-- Final recorded status: 14 successful documents and 3 failed documents.
-- The remaining failures involved provider rate limits and API errors from the Gemini and Groq providers.
-- Extraction commits results per document, allowing completed work to be retained if a later document fails.
-- Retry behavior was verified by running the script with `--retry-failed`.
+
+- Starting corpus: 17 eligible source documents.
+- Initial extraction: 13 succeeded and 4 failed.
+- First retry: 1 additional document succeeded and 3 remained failed.
+- Subsequent retry runs successfully extracted documents 34 (NIST SP 800-53 Revision 5) and 37 (SEBI CSCRF Technical Clarifications August 2025).
+- Latest observed status: 16 successful documents and 1 failed document out of 17 eligible documents.
+- Remaining failure: document 35, SEBI CSCRF Circular August 2024. Gemini returned a rate-limit error and Groq returned an API status error.
+- Extraction commits results per document. Previously successful documents are skipped, and `--retry-failed` retries unsuccessful documents.
+- All 17 eligible documents have been attempted, but one still needs a successful extraction.
 
 #### Limitations and Follow-up
-- The starting corpus contains 17 source documents, fewer than the lab's 50-document target. All available source documents were attempted, but three remain unsuccessful.
-- The three failed documents should be retried after provider rate limits clear.
-- Record the actual extraction cost from available usage data before claiming a total or per-document cost.
-- Manually compare at least five successful metadata records with their original source documents before claiming source-level verification.
-- Review valid but potentially incorrect metadata separately from schema-valid extraction results; passing Pydantic validation does not prove factual accuracy.
+
+- Retry document 35 after provider availability and rate limits have recovered.
+- The exact extraction cost and per-document cost have not been verified. Do not report an amount without reliable usage or billing data.
+- Five SEBI records were manually compared against their source PDFs; see the Manual metadata verification section below.
+- Schema validation does not guarantee factual correctness. Language labels and malformed characters in some summaries still need review.
+
+### D09 Required Reflection
+
+#### Prompt comparison
+
+- Best measured classifier prompts: `classify_v1`, `classify_v2`, `classify_v3`, and `classify_v4`, each scoring 20/20 (100%) on the current test set.
+- V4 changes: the versioned prompts refine classification guidance, ambiguity handling, and resistance to prompt injection. V4 did not improve the measured score because all four versions scored 20/20.
+- Hardest incorrect question: none was recorded in the current 20-question evaluation because all four versions answered every labelled question correctly. This does not establish performance on unseen questions.
+- Test-set label changes after evaluation: not recorded; do not claim a label was changed unless the evaluation history confirms it.
+- Input tokens per question: not recorded in the prompt comparison results. Measure token usage before comparing the cost of the prompt versions.
+
+#### DocMeta contract
+
+- Validation contract: `src/controlmap/llm/doc_meta.py`.
+- Extraction prompt: `prompts/extract_v1.md`.
+- The contract validates structured metadata. Review the project-specific fields against the actual source-document use case; valid output is not proof of factual accuracy.
+
+#### Extraction run
+
+- Prompt version: `extract_v1`.
+- Latest observed result: 16 successful, 1 failed, out of 17 eligible source documents.
+- Remaining failure: document 35, SEBI CSCRF Circular August 2024.
+- Most recent failure reason: Gemini rate limiting and a Groq API status error. Retry after provider availability recovers.
+- Extraction cost: not verified. Obtain reliable usage or billing information before recording a rupee amount.
+- A valid-but-wrong metadata example should be documented only after comparing a specific extracted field against its source. See the data-quality observations and manual verification section for findings already identified.
+
+#### One thing that went wrong and how it was fixed
+
+- The extraction run encountered provider errors while processing document 35. The script retained successful per-document results, and the `--retry-failed` option allowed unsuccessful documents to be retried without reprocessing previously successful documents.
+- The remaining document still needs a successful retry; the extraction task is not yet fully complete.
+
 ### Live API Verification
 
 Verified against the deployed service at `https://prince28-sec10-controlmap.onrender.com` on 26 November 2026.
