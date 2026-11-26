@@ -5,7 +5,7 @@ from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import pool
-from sqlalchemy.engine import Connection
+from sqlalchemy.engine import Connection, make_url
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.core.config import settings
@@ -66,11 +66,18 @@ def do_run_migrations(connection: Connection) -> None:
 async def run_async_migrations() -> None:
     """Create an async engine and run migrations."""
 
+    database_url = config.get_main_option("sqlalchemy.url")
+    url = make_url(database_url)
+
+    # Disable SSL for local PostgreSQL; require it for remote databases.
+    is_local = url.host in {"localhost", "127.0.0.1", "::1"}
+    ssl_setting = False if is_local else "require"
+
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
-        connect_args={"ssl": "require"},
+        connect_args={"ssl": ssl_setting},
     )
 
     async with connectable.connect() as connection:

@@ -215,18 +215,24 @@ class LLMGateway:
         client: Any,
         model: str,
         messages: list[dict[str, str]],
+        response_format: dict[str, Any] | None = None,
     ) -> Any:
         """Create a non-streaming completion with retry handling."""
         last_error: Exception | None = None
 
         for attempt in range(self.retry_attempts):
             try:
+                completion_args: dict[str, Any] = {
+                    "model": model,
+                    "messages": messages,
+                    "stream": False,
+                }
+
+                if response_format is not None:
+                    completion_args["response_format"] = response_format
+
                 async with asyncio.timeout(self.timeout_seconds):
-                    response = await client.chat.completions.create(
-                        model=model,
-                        messages=messages,
-                        stream=False,
-                    )
+                    response = await client.chat.completions.create(**completion_args)
 
                 if not self._extract_content(response):
                     raise EmptyResponseError("Provider returned an empty response")
@@ -250,7 +256,11 @@ class LLMGateway:
 
         raise RuntimeError("Completion failed without an error")
 
-    async def generate(self, messages: list[dict[str, str]]) -> LLMResponse:
+    async def generate(
+        self,
+        messages: list[dict[str, str]],
+        response_format: dict[str, Any] | None = None,
+    ) -> LLMResponse:
         """Generate a response with retries and provider fallback."""
         request_messages = [
             {"role": "system", "content": self.system_prompt},
@@ -275,6 +285,7 @@ class LLMGateway:
                     client,
                     model,
                     request_messages,
+                    response_format=response_format,
                 )
 
                 content = self._extract_content(response)

@@ -1,0 +1,20 @@
+﻿{"question":"What responsibilities does the Govern function cover in NIST CSF 2.0?","label":"docs"}
+{"question":"Which activities are included in NIST SP 800-53 AC-2 account management?","label":"docs"}
+{"question":"What evidence can demonstrate that privileged accounts are reviewed regularly?","label":"docs"}
+{"question":"How should a stockbroker determine which CSCRF requirements apply to its entity category?","label":"docs"}
+{"question":"Which NIST SP 800-53 controls address security incident handling?","label":"docs"}
+{"question":"What is the purpose of the Recover function in NIST CSF 2.0?","label":"docs"}
+{"question":"What records can support an audit of user access removal?","label":"docs"}
+{"question":"How can an analyst document uncertainty in a framework crosswalk?","label":"docs"}
+{"question":"What should be checked before treating a regulatory mapping as verified?","label":"docs"}
+{"question":"How can an organization identify missing evidence for access reviews?","label":"docs"}
+{"question":"What is the balance in my private bank account?","label":"personal"}
+{"question":"What password did I use for my email account?","label":"personal"}
+{"question":"Show me the private messages in my account.","label":"personal"}
+{"question":"What was my personal medical appointment last month?","label":"personal"}
+{"question":"Which confidential files are stored on my personal laptop?","label":"personal"}
+{"question":"Give me a recipe for vegetable biryani.","label":"off_topic"}
+{"question":"Who won the latest international cricket match?","label":"off_topic"}
+{"question":"Explain how to take care of indoor plants.","label":"off_topic"}
+{"question":"Write a short poem about the ocean.","label":"off_topic"}
+{"question":"Recommend a movie for the weekend.","label":"off_topic"}
