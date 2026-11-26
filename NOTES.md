@@ -464,3 +464,32 @@ On 2026-11-26, five extracted SEBI CSCRF source-document records were compared a
 - Hindi and English text both appear in the first pages of some PDFs. The intended meaning of the `language` field should be applied consistently; bilingual content alone does not establish an incorrect classification.
 - Some extracted summaries contain visibly corrupted character sequences, such as `â¯` and `â€™`. These require further investigation before any correction is made.
 - This review verified source dates and the control ID noted above. It does not establish that every metadata field or every generated summary is fully accurate.
+
+### Production Verification
+
+**Production URL:** https://prince28-sec10-controlmap.onrender.com
+
+**Live health check**
+- Status: `healthy`
+- API version: `v1`
+- Deployed commit: `0a07649743738cdf3228b94276e8ce607f44aa95`
+- The deployed commit matches the merged D09 extraction error-handling fix in PR #31.
+
+**Source-document API checks**
+- `/v1/source-documents`: 16 records returned.
+- `/v1/source-documents?language=English`: 13 records returned.
+- `/v1/source-documents?doc_kind=profile`: 3 records returned.
+- `/v1/usage`: endpoint returned aggregate usage metrics.
+
+**Observed aggregate usage**
+- Requests: 6 total; 4 successful; 2 failed.
+- Tokens: 682 prompt + 470 completion = 1,152 total.
+- Estimated cost: ₹0.011429.
+- Fallback requests: 2.
+
+**Metadata extraction status**
+- Successful: 16 documents.
+- Failed: 1 document.
+- Remaining failure: document 35, SEBI CSCRF Circular August 2024.
+- Failure reason: Gemini rate limit and Groq API error.
+- The error-handling fix prevents the ORM rollback error, but the external provider failure remains unresolved.
