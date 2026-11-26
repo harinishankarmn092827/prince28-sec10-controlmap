@@ -373,3 +373,44 @@ does not establish recovery behavior for every real-world server.
 - Confirmed that `eval/prompt_comparison.json` contains versions 1, 2, 3, and 4.
 - Each version scored 20/20 with zero errors in the recorded run.
 - Implemented document-metadata extraction and source-document API filters; endpoint registration and all seven query parameters verified through OpenAPI.
+### Metadata Extraction
+
+#### Implementation
+- Added versioned metadata extraction using `prompts/extract_v1.md`.
+- Added a Pydantic validation contract in `src/controlmap/llm/doc_meta.py`.
+- Added a resumable extraction script at `scripts/extract_metadata.py`.
+- Extraction results are stored under `metadata._metadata_extraction`.
+- Previously successful documents are skipped on subsequent runs. The `--retry-failed` option allows failed documents to be attempted again.
+- Document text is treated as untrusted input, and the extraction prompt instructs the model not to follow instructions embedded in source documents.
+
+#### Extraction Results
+- The source corpus contained 17 eligible source documents in the recorded run.
+- Initial extraction succeeded for 13 documents and failed for 4.
+- A retry run selected the 4 failed documents and skipped the 13 previously successful documents.
+- The retry run succeeded for 1 additional document and failed for 3.
+- Final recorded status: 14 successful documents and 3 failed documents.
+- The remaining failures involved provider rate limits and API errors from the Gemini and Groq providers.
+- Extraction commits results per document, allowing completed work to be retained if a later document fails.
+- Retry behavior was verified by running the script with `--retry-failed`.
+
+#### Limitations and Follow-up
+- The starting corpus contains 17 source documents, fewer than the lab's 50-document target. All available source documents were attempted, but three remain unsuccessful.
+- The three failed documents should be retried after provider rate limits clear.
+- Record the actual extraction cost from available usage data before claiming a total or per-document cost.
+- Manually compare at least five successful metadata records with their original source documents before claiming source-level verification.
+- Review valid but potentially incorrect metadata separately from schema-valid extraction results; passing Pydantic validation does not prove factual accuracy.
+### Live API Verification
+
+Verified against the deployed service at `https://prince28-sec10-controlmap.onrender.com` on 26 November 2026.
+
+- `/health` returned `status=healthy`, version `v1`, and commit `27653a22197ebcc945a47bdaa95404fc913c2b1f`.
+- `/v1/source-documents?language=English` returned 11 records.
+- `/v1/source-documents?doc_kind=circular` returned 6 records.
+- `/v1/source-documents?framework=CSCRF` returned 6 records.
+- `/v1/usage` returned aggregate request, token, cost, and fallback statistics.
+- `/v1/documents` returned the existing control-record dataset; its response did not demonstrate filtering by the extracted `doc_kind` metadata. The source-document endpoint is the appropriate endpoint for validating extracted metadata filters.
+
+#### Data-quality observations
+- Records 33 and 36 were labelled `Hindi`, although their summaries appeared to describe English circulars. Verify against the original source documents before correcting them.
+- Some summaries displayed malformed characters, including `â¯` and `â€™`. Investigate text encoding before performing a bulk correction.
+- Successful API responses and schema validation do not independently establish the factual accuracy of extracted metadata.
