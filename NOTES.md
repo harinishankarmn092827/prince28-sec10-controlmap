@@ -414,3 +414,21 @@ Verified against the deployed service at `https://prince28-sec10-controlmap.onre
 - Records 33 and 36 were labelled `Hindi`, although their summaries appeared to describe English circulars. Verify against the original source documents before correcting them.
 - Some summaries displayed malformed characters, including `â¯` and `â€™`. Investigate text encoding before performing a bulk correction.
 - Successful API responses and schema validation do not independently establish the factual accuracy of extracted metadata.
+### Manual metadata verification
+
+On 2026-11-26, five extracted SEBI CSCRF source-document records were compared against their locally downloaded PDFs.
+
+| Record ID | Source document | Verified source date | Additional finding |
+|---|---|---|---|
+| 28 | SEBI CSCRF Circular August 2024 | 2024-08-20 | Source circular identifier is `SEBI/HO/ITD-1/ITD_CSC_EXT/P/CIR/2024/113`. |
+| 30 | SEBI CSCRF Clarifications December 2024 | 2024-12-31 | Source circular identifier is `SEBI/HO/ITD-1/ITD_CSC_EXT/P/CIR/2024/184`. |
+| 31 | SEBI CSCRF Clarifications April 2025 | 2025-04-30 | Source circular identifier is `SEBI/HO/ITD-1/ITD_CSC_EXT/P/CIR/2025/60`. |
+| 32 | SEBI CSCRF Technical Clarifications August 2025 | 2025-08-28 | Source circular identifier is `SEBI/HO/ITD-1/ITD_CSC_EXT/P/CIR/2025/119`. |
+| 33 | `1735646756843-b5a27629686d.pdf` | 2024-12-31 | The source explicitly mentions Data Localisation and the Data Security standard `PR.DS.S2`, supporting the extracted control ID. |
+
+**Review observations:**
+- The five source dates match the dates extracted into metadata.
+- Record 33's `control_id` value, `PR.DS.S2`, is supported by the source PDF.
+- Hindi and English text both appear in the first pages of some PDFs. The intended meaning of the `language` field should be applied consistently; bilingual content alone does not establish an incorrect classification.
+- Some extracted summaries contain visibly corrupted character sequences, such as `â¯` and `â€™`. These require further investigation before any correction is made.
+- This review verified source dates and the control ID noted above. It does not establish that every metadata field or every generated summary is fully accurate.
