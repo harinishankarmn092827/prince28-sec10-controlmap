@@ -1,4 +1,4 @@
-## D03 — PostgreSQL and Database Migrations
+﻿## D03 — PostgreSQL and Database Migrations
 
 ### Database Models
 - Database models are maintained in `app/database/models.py`.
@@ -469,11 +469,14 @@ On 2026-11-26, five extracted SEBI CSCRF source-document records were compared a
 
 **Production URL:** https://prince28-sec10-controlmap.onrender.com
 
-**Live health check**
-- Status: `healthy`
+### Live Deployment Health Verification
+
+- Endpoint: `/health`
+- Result: `healthy`
 - API version: `v1`
-- Deployed commit: `0a07649743738cdf3228b94276e8ce607f44aa95`
-- The deployed commit matches the merged D09 extraction error-handling fix in PR #31.
+- Deployed commit: `70911e2ffddfdaae882d3ab61b7cb43ed10d2bfc`
+- Verification: Passed using a live HTTP GET request.
+- Verified on: 2026-11-26
 
 **Source-document API checks**
 - `/v1/source-documents`: 16 records returned.
