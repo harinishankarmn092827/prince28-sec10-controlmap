@@ -10,6 +10,7 @@ from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.chat_routes import router as chat_router
+from app.api.ingest_routes import router as ingest_router
 from app.api.mapping_routes import router as mapping_router
 from app.api.routes import router
 from app.api.source_document_routes import router as source_document_router
@@ -116,6 +117,7 @@ def create_app() -> FastAPI:
     application.include_router(mapping_router)
     application.include_router(chat_router)
     application.include_router(source_document_router)
+    application.include_router(ingest_router)
 
     @application.get("/health")
     @application.head("/health")

@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Application and LLM gateway settings."""
+    """Application, LLM gateway, and ingestion queue settings."""
 
     app_name: str = "ControlMap"
     api_version: str = "v1"
@@ -33,6 +33,16 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 30.0
     usd_inr: float = 95.0
     prompts_dir: Path = Path("prompts")
+
+    # Async ingestion queue
+    redis_url: str = "redis://localhost:6379"
+    manifest_file: Path = Path("data/manifest.jsonl")
+    admin_token: str = ""
+    worker_in_api: bool = False
+    ingest_concurrency: int = 2
+    ingest_rpm: float = 12.0
+    ingest_job_timeout: int = 60
+    ingest_max_tries: int = 3
 
     model_config = SettingsConfigDict(
         env_file=".env",
