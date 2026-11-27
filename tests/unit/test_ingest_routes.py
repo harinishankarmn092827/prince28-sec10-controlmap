@@ -154,13 +154,14 @@ def test_create_job_rejects_more_than_maximum_urls(
     assert response.status_code == 422
 
 
-def test_get_job_rejects_missing_token(client):
+def test_get_job_rejects_missing_token(client, admin_token):
     """Job status must not be available without authentication."""
     response = client.get(
         "/api/ingest/jobs/test-job-id",
     )
 
     assert response.status_code == 401
+    assert response.json()["detail"] == "A valid bearer token is required."
 
 
 def test_get_job_rejects_invalid_token(client, admin_token):
